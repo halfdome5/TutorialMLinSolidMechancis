@@ -32,7 +32,7 @@ Load model
 
 """
 
-model = lm.main()
+model = lm.main(model_type='ICNN')
 
 
 # %%   
@@ -83,4 +83,12 @@ plt.legend()
 plt.show()
 
 
+# %% 
+"""
+Model parameters
 
+"""
+
+for idx, layer in enumerate(model.layers):
+    print(layer.name, layer)
+    print(layer.weights, "\n")

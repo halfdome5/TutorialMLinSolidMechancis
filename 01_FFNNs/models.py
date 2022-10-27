@@ -17,6 +17,7 @@ Import modules
 """
 import tensorflow as tf
 from tensorflow.keras import layers
+from tensorflow.keras.constraints import non_neg
 import datetime
 now = datetime.datetime.now
 
@@ -28,13 +29,27 @@ _x_to_y: custom trainable layer
 """
 
 class _x_to_y(layers.Layer):
-    def __init__(self):
+    def __init__(self, model_type):
         super(_x_to_y, self).__init__()
+        if model_type == 'FFNN':
+            self.__create_FFNN()
+        if model_type == 'ICNN':
+            self.__create_ICNN()
+        
+    def __create_FFNN(self):
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(16, 'softplus')]
-        self.ls += [layers.Dense(16, 'softplus')]
+        self.ls = [layers.Dense(4, 'sigmoid')]
+        self.ls += [layers.Dense(4, 'sigmoid')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
+        
+    def __create_ICNN(self):
+        # define hidden layers with activation functions
+        self.ls = [layers.Dense(16, 'sigmoid')]
+        self.ls += [layers.Dense(16, 'sigmoid', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(16, 'sigmoid', kernel_constraint=non_neg())]
+        # scalar-valued output function
+        self.ls += [layers.Dense(1, 'linear', kernel_constraint=non_neg())]
             
     def __call__(self, x):     
         
