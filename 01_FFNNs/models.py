@@ -38,18 +38,17 @@ class _x_to_y(layers.Layer):
         
     def __create_FFNN(self):
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(4, 'sigmoid')]
-        self.ls += [layers.Dense(4, 'sigmoid')]
+        self.ls = [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
     def __create_ICNN(self):
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(16, 'sigmoid')]
-        self.ls += [layers.Dense(16, 'sigmoid', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(16, 'sigmoid', kernel_constraint=non_neg())]
+        self.ls = [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
-        self.ls += [layers.Dense(1, 'linear', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(1, 'relu', kernel_constraint=non_neg())]
         
             
     def __call__(self, x):     
