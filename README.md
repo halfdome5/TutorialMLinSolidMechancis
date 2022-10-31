@@ -1,2 +1,2 @@
 # TutorialMLinSolidMechancis
-Code for Tutorial Machine Learning in Solid Mechanics
+Code for Tutorial Machine Learning in Solid Mechanics ...
