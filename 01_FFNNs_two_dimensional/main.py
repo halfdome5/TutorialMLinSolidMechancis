@@ -91,4 +91,5 @@ Model parameters
 
 for idx, layer in enumerate(model.layers):
     print(layer.name, layer)
-    print(layer.weights, "\n")
+    #print(layer.weights, "\n")
+    print(layer.get_weights())

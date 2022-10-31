@@ -32,7 +32,8 @@ Load model
 
 """
 
-model = lm.main(model_type='ICNN')
+model = lm.main(model_type='FFNN')
+model.summary()
 
 
 # %%   
