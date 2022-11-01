@@ -28,23 +28,35 @@ _x_to_y: custom trainable layer
 
 """
 
-class _x_to_y(layers.Layer):
-    def __init__(self, model_type):
-        super(_x_to_y, self).__init__()
-        if model_type == 'FFNN':
-            self.__create_FFNN()
-        if model_type == 'ICNN':
-            self.__create_ICNN()
-        
-    def __create_FFNN(self):
-        # define hidden layers with activation functions
+def makeLayer(xs, r_type, **kwargs):
+    cf = {
+        'FastForward': FastForwardLayer,
+        'InputConvex': InputConvexLayer
+          }
+    class_obj = cf.get(r_type, None)
+    if class_obj:
+        return class_obj(**kwargs)(xs)
+    raise ValueError
+    
+    
+class FastForwardLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
         self.ls = [layers.Dense(8, 'softplus')]
         self.ls += [layers.Dense(8, 'softplus')]
         self.ls += [layers.Dense(8, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
-    def __create_ICNN(self):
+    def __call__(self, x):     
+        #  create weights by calling on input
+        for l in self.ls:
+            x = l(x)
+        return x
+    
+class InputConvexLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
         # define hidden layers with activation functions
         self.ls = [layers.Dense(8, 'softplus')]
         self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
@@ -52,7 +64,6 @@ class _x_to_y(layers.Layer):
         # scalar-valued output function
         self.ls += [layers.Dense(1, 'relu', kernel_constraint=non_neg())]
         
-            
     def __call__(self, x):     
         #  create weights by calling on input
         for l in self.ls:
@@ -70,7 +81,7 @@ def main(**kwargs):
     # define input shape
     xs = tf.keras.Input(shape=[1])
     # define which (custom) layers the model uses
-    ys = _x_to_y(**kwargs)(xs)
+    ys = makeLayer(xs, **kwargs)
     # connect input and output
     model = tf.keras.Model(inputs = [xs], outputs = [ys])
     # define optimizer and loss function
