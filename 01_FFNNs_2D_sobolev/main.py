@@ -33,8 +33,8 @@ Load model
 
 """
 
-model = lm.main(r_type='FastForward')
-
+model = lm.main(r_type='InputConvexSobolev')
+model.summary()
 
 # %%   
 """
@@ -42,7 +42,7 @@ Load data
 
 """
 
-xs, ys, n, m = ld.f(r_type='f2', show_plot=True, verbose=1)
+xs, ys, dys, n, m = ld.f(r_type='f2Sobolev', show_plot=True, verbose=0)
 
 # %%   
 """
@@ -54,7 +54,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys], epochs = 1500,  verbose = 2)
+h = model.fit([xs], [ys, dys], epochs = 1500,  verbose = 2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -74,19 +74,52 @@ Evaluation
 
 """
 
+
+# plot function values
 fig = plt.figure(2, dpi=600)
 ax = plt.axes(projection='3d')
 ax.grid()
 
 ax.scatter(xs[:,0], xs[:,1], ys, c='green', label='calibration data')
 surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
-                tf.reshape(ys, [n,m]))
+                tf.reshape(ys, [n,m]), cmap=cm.viridis)
+fig.colorbar(surf, orientation='vertical', pad=0.1)
 
-fig.colorbar(surf, shrink=0.5, aspect=10)
+ax.set_xlabel('x1')
+ax.set_ylabel('x2')
+ax.set_zlabel('f')
+plt.legend()
+plt.show()
 
-plt.xlabel('x1')
-plt.ylabel('x2')
-plt.ylabel('y')
+# plot gradients in x1
+fig = plt.figure(3, dpi=600)
+ax = plt.axes(projection='3d')
+ax.grid()
+
+ax.scatter(xs[:,0], xs[:,1], dys[:,0], c='green', label='calibration data')
+surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
+                tf.reshape(dys[:,0], [n,m]), cmap=cm.viridis)
+fig.colorbar(surf, orientation='vertical', pad=0.1)
+
+ax.set_xlabel('x1')
+ax.set_ylabel('x2')
+ax.set_zlabel('dfdx1')
+plt.legend()
+plt.show()
+
+# plot gradients in x1
+fig = plt.figure(4, dpi=600)
+ax = plt.axes(projection='3d')
+ax.grid()
+
+ax.scatter(xs[:,0], xs[:,1], dys[:,1], c='green', label='calibration data')
+surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
+                tf.reshape(dys[:,1], [n,m]), cmap=cm.viridis)
+fig.colorbar(surf, orientation='vertical', pad=0.15)
+
+ax.set_xlabel('x1')
+ax.set_ylabel('x2')
+ax.set_zlabel('dfdx2')
 plt.legend()
 plt.show()
 
@@ -104,4 +137,4 @@ def print_model_parameters():
         #print(layer.weights, "\n")
         print(layer.get_weights())
         
-print_model_parameters()
+#print_model_parameters()

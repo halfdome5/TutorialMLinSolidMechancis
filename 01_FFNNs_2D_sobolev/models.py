@@ -69,16 +69,18 @@ _x_to_y: custom trainable and non-trainable layer
 #             x = l(x)
 #         return x
 
-def makeLayer(xs, r_type, **kwargs):
+def makeLayer(r_type, **kwargs):
     cf = {
         'FastForward': FastForwardLayer,
         'InputConvex': InputConvexLayer,
+        'InputConvexSobolev': InputConvexSobolevLayer,
         'f1': f1,
-        'f2': f2
+        'f2': f2,
+        'f2Sobolev': f2Sobolev
           }
     class_obj = cf.get(r_type, None)
     if class_obj:
-        return class_obj(**kwargs)(xs)
+        return class_obj(**kwargs)
     raise ValueError
     
     
@@ -105,13 +107,36 @@ class InputConvexLayer(layers.Layer):
         self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
-        self.ls += [layers.Dense(1, 'relu', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
     def __call__(self, x):     
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
         return x
+    
+class InputConvexSobolevLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        # define hidden layers with activation functions
+        self.ls = [layers.Dense(8, 'softplus')]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        # scalar-valued output function
+        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
+    
+    def call(self, x):
+        #  create weights by calling on input
+        def loop(x):
+            for l in self.ls:
+                x = l(x)
+            return x
+            
+        with tf.GradientTape() as g:
+            g.watch(x)
+            dx = loop(x)
+        return loop(x), dx
+        
     
 class f1(layers.Layer):
     def __init__(self):
@@ -133,46 +158,20 @@ class f2(layers.Layer):
         x = x[:,0] + 0.5 * x[:,1]
         return x
     
-# class f1(layers.Layer):
-#     def __init__(self):
-#         super().__init__()
-#         ws = np.array([[1,-1]]).reshape((2,1))
-#         bs = np.array([0])
-        
-#         # define hidden layer that squares inputs
-#         self.ls = [layers.Lambda(lambda x: x **2)]
-#         # scalar-valued output layer
-#         l = layers.Dense(1, trainable=False)
-#         l.build(input_shape=(2,))
-#         l.set_weights([ws, bs])
-#         self.ls += [l]
-        
-#     def __call__(self, x):
-#         #  create weights by calling on input
-#         for l in self.ls:
-#             x = l(x)
-#         return x
+class f2Sobolev(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        pass
     
-# class f2(layers.Layer):
-#     def __init__(self):
-#         super().__init__()
-#         ws = np.array([[1,0.5]]).reshape((2,1))
-#         bs = np.array([0])
+    def __call__(self, x):
+        # compute function values
+        y = x ** 2
+        y = y[:,0] + 0.5 * y[:,1]
         
-#         # define hidden layer that squares inputs
-#         self.ls = [layers.Lambda(lambda x: x **2)]
-#         # scalar-valued output layer
-#         l = layers.Dense(1, trainable=False)
-#         l.build(input_shape=(2,))
-#         l.set_weights([ws, bs])
-#         self.ls += [l]
+        # compute gradient
+        dy = tf.stack([2 * x[:,0], x[:,1]], 1) 
         
-#     def __call__(self, x):
-#         #  create weights by calling on input
-#         for l in self.ls:
-#             x = l(x)
-#         return x
-    
+        return y, dy
 
 
 # %%   
@@ -185,9 +184,9 @@ def main(**kwargs):
     # define input shape
     xs = tf.keras.Input(shape=(2,))
     # define which (custom) layers the model uses
-    ys = makeLayer(xs, **kwargs)
+    ys, dys = makeLayer(**kwargs)(xs)
     # connect input and output
-    model = tf.keras.Model(inputs = [xs], outputs = [ys])
+    model = tf.keras.Model(inputs = [xs], outputs = [ys, dys])
     # define optimizer and loss function
     model.compile('adam', 'mse')
     return model
