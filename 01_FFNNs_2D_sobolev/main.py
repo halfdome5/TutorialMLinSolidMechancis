@@ -33,7 +33,7 @@ Load model
 
 """
 
-model = lm.main(r_type='InputConvexSobolev')
+model = lm.main(r_type='InputConvex', sobolev_training=True)
 model.summary()
 
 # %%   
@@ -42,7 +42,7 @@ Load data
 
 """
 
-xs, ys, dys, n, m = ld.f(r_type='f2Sobolev', show_plot=True, verbose=0)
+xs, ys, dys, n, m = ld.f(r_type='f2Sobolev', show_plot=True)
 
 # %%   
 """
@@ -74,6 +74,7 @@ Evaluation
 
 """
 
+ys_pred, dys_pred = model.predict(xs)
 
 # plot function values
 fig = plt.figure(2, dpi=600)
@@ -82,7 +83,7 @@ ax.grid()
 
 ax.scatter(xs[:,0], xs[:,1], ys, c='green', label='calibration data')
 surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
-                tf.reshape(ys, [n,m]), cmap=cm.viridis)
+                tf.reshape(ys_pred, [n,m]), cmap=cm.inferno)
 fig.colorbar(surf, orientation='vertical', pad=0.1)
 
 ax.set_xlabel('x1')
@@ -98,7 +99,7 @@ ax.grid()
 
 ax.scatter(xs[:,0], xs[:,1], dys[:,0], c='green', label='calibration data')
 surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
-                tf.reshape(dys[:,0], [n,m]), cmap=cm.viridis)
+                tf.reshape(dys_pred[:,0], [n,m]), cmap=cm.inferno)
 fig.colorbar(surf, orientation='vertical', pad=0.1)
 
 ax.set_xlabel('x1')
@@ -114,7 +115,7 @@ ax.grid()
 
 ax.scatter(xs[:,0], xs[:,1], dys[:,1], c='green', label='calibration data')
 surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
-                tf.reshape(dys[:,1], [n,m]), cmap=cm.viridis)
+                tf.reshape(dys_pred[:,1], [n,m]), cmap=cm.inferno)
 fig.colorbar(surf, orientation='vertical', pad=0.15)
 
 ax.set_xlabel('x1')

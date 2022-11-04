@@ -26,7 +26,7 @@ from matplotlib import pyplot as plt
 Load data model
 
 """
-def load_model(r_type, verbose=0, **kwargs):
+def makeLayer(r_type, **kwargs):
     cf = {
         'f1': lm.f1,
         'f2': lm.f2,
@@ -56,7 +56,7 @@ def f(r_type, show_plot=False, **kwargs):
     
     xs = tf.stack((x1s.reshape(-1), x2s.reshape(-1)), axis=1)
     
-    model = load_model(r_type, **kwargs)
+    model = makeLayer(r_type, **kwargs)
     ys, dys = model(xs)
     
     if show_plot:
@@ -109,4 +109,4 @@ def plot_data(xs, ys, dys):
     plt.legend()
     plt.show()
    
-#f(r_type='f2Sobolev', show_plot=True, verbose=1)
+f(r_type='f2Sobolev', show_plot=True)

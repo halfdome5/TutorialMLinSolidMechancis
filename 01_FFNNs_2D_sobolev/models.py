@@ -4,7 +4,7 @@ Task 1: Feed-Forward Neural Networks
 
 ==================
 
-Authors: Dominik K. Klein
+Authors: Jasper Schommartz, Toprak Kis
          
 08/2022
 """
@@ -19,81 +19,55 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import non_neg
 import datetime
-import numpy as np
 now = datetime.datetime.now
 
 
 # %%   
 """
-_x_to_y: custom trainable and non-trainable layer
+_x_to_y: custom trainable layers
 
 """
 
-# class _x_to_y(layers.Layer):
-#     def __init__(self, model_type, **kwargs):
-#         super(_x_to_y, self).__init__()
-#         if model_type == 'FFNN':
-#             self.__create_FFNN()
-#         if model_type == 'ICNN':
-#             self.__create_ICNN()
-#         if model_type == 'f':
-#             self.__create_f_NN(**kwargs)
-        
-#     def __create_FFNN(self):
-#         # define hidden layers with activation functions
-#         self.ls = [layers.Dense(4, 'softplus')]
-#         self.ls += [layers.Dense(4, 'softplus')]
-#         # scalar-valued output function
-#         self.ls += [layers.Dense(1)]
-        
-#     def __create_ICNN(self):
-#         # define hidden layers with activation functions
-#         self.ls = [layers.Dense(4, 'softplus')]
-#         self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
-#         # scalar-valued output function
-#         self.ls += [layers.Dense(1, 'relu', kernel_constraint=non_neg())]
-        
-#     def __create_f_NN(self, weights, bias):
-#         # define hidden layer with square function
-#         self.ls = [layers.Lambda(lambda x: x **2)]
-#         # scalar-valued output layer
-#         l = layers.Dense(1, trainable=False)
-#         l.build(input_shape=(2,))
-#         l.set_weights([weights, bias])
-#         self.ls += [l]
-        
-            
-#     def __call__(self, x):     
-        
-#         for l in self.ls:
-#             x = l(x)
-#         return x
-
+    
 def makeLayer(r_type, **kwargs):
     cf = {
-        'FastForward': FastForwardLayer,
+        'FeedForward': FeedForwardLayer,
         'InputConvex': InputConvexLayer,
-        'InputConvexSobolev': InputConvexSobolevLayer,
-        'f1': f1,
-        'f2': f2,
-        'f2Sobolev': f2Sobolev
           }
     class_obj = cf.get(r_type, None)
     if class_obj:
         return class_obj(**kwargs)
-    raise ValueError
+    raise ValueError('Unknown class type')
     
+    # if sobolev_training: 
+    #       l = SobolevLayer(l)
+    return l
     
-class FastForwardLayer(layers.Layer):
+class SobolevLayer(layers.Layer):
+    def __init__(self, l):
+        super().__init__()
+        self.l = l
+    
+    def call(self, x):
+        if tf.keras.backend.is_keras_tensor(x):
+            return x
+        
+        with tf.GradientTape() as g:
+            g.watch(x)
+            y = self.l(x)
+        return g.gradient(y, x)
+
+    
+class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
-        self.ls = [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus')]
+        self.ls = [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus')]
+        # self.ls += [layers.Dense(8, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
-    def __call__(self, x):     
+    def call(self, x):     
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
@@ -105,38 +79,22 @@ class InputConvexLayer(layers.Layer):
         # define hidden layers with activation functions
         self.ls = [layers.Dense(8, 'softplus')]
         self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        # self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
-    def __call__(self, x):     
+    def call(self, x):    
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
         return x
     
-class InputConvexSobolevLayer(layers.Layer):
-    def __init__(self):
-        super().__init__()
-        # define hidden layers with activation functions
-        self.ls = [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
-        # scalar-valued output function
-        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
-    
-    def call(self, x):
-        #  create weights by calling on input
-        def loop(x):
-            for l in self.ls:
-                x = l(x)
-            return x
-            
-        with tf.GradientTape() as g:
-            g.watch(x)
-            dx = loop(x)
-        return loop(x), dx
-        
+#%%
+"""
+  
+_x_to_y: custom non-trainable layers      
+
+"""
     
 class f1(layers.Layer):
     def __init__(self):
@@ -180,11 +138,19 @@ main: construction of the NN model
 
 """
 
-def main(**kwargs):
+def main(sobolev_training=False, **kwargs):
     # define input shape
     xs = tf.keras.Input(shape=(2,))
     # define which (custom) layers the model uses
-    ys, dys = makeLayer(**kwargs)(xs)
+    l_nn = makeLayer(**kwargs)
+    ys = l_nn(xs)
+    # apply sobolev training
+    if sobolev_training: 
+        dys = SobolevLayer(l_nn)(xs)
+        # l_sobolev = SobolevLayer(l_nn)
+        # dys = l_sobolev(xs)
+        # dys = l_sobolev(xs)
+        # dys = SobolevLayer(l_nn).build()(xs)
     # connect input and output
     model = tf.keras.Model(inputs = [xs], outputs = [ys, dys])
     # define optimizer and loss function
