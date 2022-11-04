@@ -30,16 +30,16 @@ _x_to_y: custom trainable layer
 
 def makeLayer(xs, r_type, **kwargs):
     cf = {
-        'FastForward': FastForwardLayer,
+        'FeedForward': FeedForwardLayer,
         'InputConvex': InputConvexLayer
           }
     class_obj = cf.get(r_type, None)
     if class_obj:
         return class_obj(**kwargs)(xs)
-    raise ValueError
+    raise ValueError('Class object not found')
     
     
-class FastForwardLayer(layers.Layer):
+class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
         self.ls = [layers.Dense(8, 'softplus')]

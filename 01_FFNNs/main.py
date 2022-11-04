@@ -32,7 +32,7 @@ Load model
 
 """
 
-model = lm.main(r_type='FastForward')
+model = lm.main(r_type='FeedForward')
 model.summary()
 
 
