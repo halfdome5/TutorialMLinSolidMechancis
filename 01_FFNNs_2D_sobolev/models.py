@@ -6,7 +6,7 @@ Task 1: Feed-Forward Neural Networks
 
 Authors: Jasper Schommartz, Toprak Kis
          
-08/2022
+11/2022
 """
 
 
@@ -41,7 +41,7 @@ def makeLayer(r_type, **kwargs):
     
     # if sobolev_training: 
     #       l = SobolevLayer(l)
-    return l
+    #return l
     
 class SobolevLayer(layers.Layer):
     def __init__(self, l):

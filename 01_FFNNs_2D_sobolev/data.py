@@ -4,7 +4,7 @@ Task 1: Feed-Forward Neural Networks
 
 ==================
 
-Authors: Dominik K. Klein
+Authors: Jasper Schommartz, Toprak Kis
          
 08/2022
 """
@@ -19,6 +19,11 @@ import tensorflow as tf
 import numpy as np
 import models as lm
 from matplotlib import pyplot as plt
+
+# %%
+# own modules
+import plots as p
+
 
 # %%
 """
@@ -60,9 +65,9 @@ def f(r_type, show_plot=False, **kwargs):
     ys, dys = model(xs)
     
     if show_plot:
-        plot_data(xs, ys, dys)
+        plot_data(xs, ys, dys, [n, m])
 
-    return xs, ys, dys, n, m
+    return xs, ys, dys, [n, m]
 
 # %%
 """
@@ -71,42 +76,25 @@ Plot data (optional)
 
 """
 
-def plot_data(xs, ys, dys):
+def plot_data(xs, ys, dys, reshape_dim):
     
-    # plot function values
-    plt.figure(dpi=600)
-    ax = plt.axes(projection='3d')
-    ax.grid()
+    label_dict = {'x': 'x1',
+                  'y': 'x2',
+                  'z': 'f'}
+    p_func_value = p.Plot(xs[:,0], xs[:,1], [], ys, reshape_dim, label_dict)
+    p_func_value.draw('scatter')
+
+    label_dict = {'x': 'x1',
+                  'y': 'x2',
+                  'z': 'dfdx1'}
+    p_grad_x1 = p.Plot(xs[:,0], xs[:,1], [], dys[:,0], reshape_dim, label_dict)
+    p_grad_x1.draw('scatter')
+
+    label_dict = {'x': 'x1',
+                  'y': 'x2',
+                  'z': 'dfdx2'}
+    p_grad_x2 = p.Plot(xs[:,0], xs[:,1], [], dys[:,1], reshape_dim, label_dict)
+    p_grad_x2.draw('scatter')
     
-    ax.scatter(xs[:,0], xs[:,1], ys, c='green', label='calibration data',)
-    ax.set_xlabel('x1')
-    ax.set_ylabel('x2')
-    ax.set_zlabel('f')
-    plt.legend()
-    plt.show()
-    
-    # plot gradients in x1
-    plt.figure(dpi=600)
-    ax = plt.axes(projection='3d')
-    ax.grid()
-    
-    ax.scatter(xs[:,0], xs[:,1], dys[:,0], c='green', label='calibration data')
-    ax.set_xlabel('x1')
-    ax.set_ylabel('x2')
-    ax.set_zlabel('dfdx1')
-    plt.legend()
-    plt.show()
-    
-    # plot gradients in x1
-    plt.figure(dpi=600)
-    ax = plt.axes(projection='3d')
-    ax.grid()
-    
-    ax.scatter(xs[:,0], xs[:,1], dys[:,1], c='green', label='calibration data')
-    ax.set_xlabel('x1')
-    ax.set_ylabel('x2')
-    ax.set_zlabel('dfdx2')
-    plt.legend()
-    plt.show()
    
 f(r_type='f2Sobolev', show_plot=True)
