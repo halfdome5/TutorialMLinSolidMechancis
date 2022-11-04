@@ -33,7 +33,7 @@ Load model
 
 """
 
-model = lm.main(r_type='FastForward')
+model = lm.main(r_type='FeedForward')
 
 
 # %%   
@@ -42,7 +42,7 @@ Load data
 
 """
 
-xs, ys, n, m = ld.f(r_type='f2', show_plot=True, verbose=1)
+xs, ys, n, m = ld.f(r_type='f1', show_plot=True)
 
 # %%   
 """
@@ -74,19 +74,20 @@ Evaluation
 
 """
 
+ys_pred = model.predict(xs)
+
 fig = plt.figure(2, dpi=600)
 ax = plt.axes(projection='3d')
 ax.grid()
 
 ax.scatter(xs[:,0], xs[:,1], ys, c='green', label='calibration data')
 surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
-                tf.reshape(ys, [n,m]))
+                tf.reshape(ys_pred, [n,m]), cmap=cm.inferno)
+fig.colorbar(surf, orientation='vertical', pad=0.1)
 
-fig.colorbar(surf, shrink=0.5, aspect=10)
-
-plt.xlabel('x1')
-plt.ylabel('x2')
-plt.ylabel('y')
+ax.set_xlabel('x1')
+ax.set_ylabel('x2')
+ax.set_zlabel('f')
 plt.legend()
 plt.show()
 
@@ -101,7 +102,7 @@ def print_model_parameters():
     model.summary()
     for idx, layer in enumerate(model.layers):
         print(layer.name, layer)
-        #print(layer.weights, "\n")
-        print(layer.get_weights())
+        print(layer.weights, "\n")
+        #print(layer.get_weights())
         
 print_model_parameters()
