@@ -55,7 +55,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, dys], epochs = 1500,  verbose = 2)
+h = model.fit([xs], [ys, dys], epochs = 1000,  verbose = 2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -77,6 +77,7 @@ Evaluation
 
 ys_pred, dys_pred = model.predict(xs)
 
+# function value
 label_dict = {'x': 'x1',
               'y': 'x2',
               'z': 'f'}
@@ -84,6 +85,7 @@ p_function_value = p.Plot(xs[:,0], xs[:,1], ys_pred, ys,
                             reshape_dim, label_dict)
 p_function_value.draw()
 
+# gradient in x1 direction
 label_dict = {'x': 'x1',
               'y': 'x2',
               'z': 'dfdx1'}
@@ -91,12 +93,37 @@ p_grad_x1 = p.Plot(xs[:,0], xs[:,1], dys_pred[:,0], dys[:,0],
                      reshape_dim, label_dict)
 p_grad_x1.draw()
 
+# gradient in x2 direction
 label_dict = {'x': 'x1',
               'y': 'x2',
               'z': 'dfdx2'}
 p_grad_x2 = p.Plot(xs[:,0], xs[:,1], dys_pred[:,1], dys[:,1], 
                      reshape_dim, label_dict)
 p_grad_x2.draw()
+
+# difference of function value
+label_dict = {'x': 'x1',
+              'y': 'x2',
+              'z': 'f-f_pred'}
+p_function_value = p.Plot(xs[:,0], xs[:,1], ys_pred.T - ys, [], 
+                            reshape_dim, label_dict)
+p_function_value.draw('surf')
+
+# difference of gradient in x1 direction
+label_dict = {'x': 'x1',
+              'y': 'x2',
+              'z': 'dfdx1-dfdx2_pred'}
+p_function_value = p.Plot(xs[:,0], xs[:,1], dys_pred[:,0] - dys[:,0], [], 
+                            reshape_dim, label_dict)
+p_function_value.draw('surf')
+
+# difference of gradient in x2 direction
+label_dict = {'x': 'x1',
+              'y': 'x2',
+              'z': 'dfdx2-dfdx2_pred'}
+p_function_value = p.Plot(xs[:,0], xs[:,1], dys_pred[:,1] - dys[:,1], [], 
+                            reshape_dim, label_dict)
+p_function_value.draw('surf')
 
 
 # %% 

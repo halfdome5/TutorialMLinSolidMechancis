@@ -61,9 +61,9 @@ class SobolevLayer(layers.Layer):
 class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
-        self.ls = [layers.Dense(4, 'softplus')]
-        self.ls += [layers.Dense(4, 'softplus')]
-        # self.ls += [layers.Dense(8, 'softplus')]
+        self.ls = [layers.Dense(4, 'sigmoid')]
+        self.ls += [layers.Dense(4, 'sigmoid')]
+        self.ls += [layers.Dense(4, 'sigmoid')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
@@ -77,9 +77,9 @@ class InputConvexLayer(layers.Layer):
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
-        # self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls = [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         

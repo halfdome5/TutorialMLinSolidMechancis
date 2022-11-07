@@ -42,7 +42,7 @@ Load data
 
 """
 
-xs, ys, n, m = ld.f(r_type='f1', show_plot=True)
+xs, ys, n, m = ld.f(r_type='f2', show_plot=True)
 
 # %%   
 """
@@ -54,7 +54,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys], epochs = 1500,  verbose = 2)
+h = model.fit([xs], [ys], epochs = 1000,  verbose = 2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')

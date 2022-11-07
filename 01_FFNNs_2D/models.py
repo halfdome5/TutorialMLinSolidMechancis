@@ -43,9 +43,9 @@ def makeLayer(r_type, **kwargs):
 class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
-        self.ls = [layers.Dense(4, 'sigmoid')]
-        self.ls += [layers.Dense(4, 'sigmoid')]
-        self.ls += [layers.Dense(4, 'sigmoid')]
+        self.ls = [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus')]
+        #self.ls += [layers.Dense(4, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
@@ -61,7 +61,7 @@ class InputConvexLayer(layers.Layer):
         # define hidden layers with activation functions
         self.ls = [layers.Dense(4, 'softplus')]
         self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
+        #self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         

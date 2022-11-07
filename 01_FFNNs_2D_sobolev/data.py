@@ -97,4 +97,4 @@ def plot_data(xs, ys, dys, reshape_dim):
     p_grad_x2.draw('scatter')
     
    
-f(r_type='f2Sobolev', show_plot=True)
+#f(r_type='f2Sobolev', show_plot=True)

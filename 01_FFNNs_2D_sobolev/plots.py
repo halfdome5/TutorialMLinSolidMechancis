@@ -39,6 +39,7 @@ class Plot:
     def scatter(self):
         self.ax.scatter(self.x, self.y, self.z_cal, c='green', 
                         label='calibration data')
+        plt.legend()
         
     def surf(self):
         X = tf.reshape(self.x, self.reshape_dim)
@@ -46,13 +47,13 @@ class Plot:
         Z = tf.reshape(self.z, self.reshape_dim)
         
         self.surf = self.ax.plot_surface(X, Y, Z, cmap=cm.inferno)
-        self.fig.colorbar(self.surf, orientation='vertical', pad=0.1)
+        self.fig.colorbar(self.surf, orientation='vertical', pad=0.15)
         
     def draw(self, kw='all'):
         if kw == 'scatter':
             self.scatter()
         elif kw == 'surf':
-            self.scatter()
+            self.surf()
         else:
             self.scatter()
             self.surf()
@@ -60,7 +61,6 @@ class Plot:
         self.ax.set_xlabel(self.label_dict['x'])
         self.ax.set_ylabel(self.label_dict['y'])
         self.ax.set_zlabel(self.label_dict['z'])
-        plt.legend()
         plt.show()
         
     
