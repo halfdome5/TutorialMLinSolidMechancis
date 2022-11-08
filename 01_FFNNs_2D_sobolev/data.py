@@ -6,7 +6,7 @@ Task 1: Feed-Forward Neural Networks
 
 Authors: Jasper Schommartz, Toprak Kis
          
-08/2022
+11/2022
 """
 
 # %%   
@@ -18,7 +18,6 @@ Import modules
 import tensorflow as tf
 import numpy as np
 import models as lm
-from matplotlib import pyplot as plt
 
 # %%
 # own modules

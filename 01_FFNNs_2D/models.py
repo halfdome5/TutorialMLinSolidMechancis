@@ -4,9 +4,9 @@ Task 1: Feed-Forward Neural Networks
 
 ==================
 
-Authors: Dominik K. Klein
+Authors: Jasper Schommartz, Toprak Kis
          
-08/2022
+11/2022
 """
 
 
@@ -19,7 +19,6 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import non_neg
 import datetime
-import numpy as np
 now = datetime.datetime.now
 
 
@@ -45,7 +44,7 @@ class FeedForwardLayer(layers.Layer):
         super().__init__()
         self.ls = [layers.Dense(4, 'softplus')]
         self.ls += [layers.Dense(4, 'softplus')]
-        #self.ls += [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
@@ -61,7 +60,7 @@ class InputConvexLayer(layers.Layer):
         # define hidden layers with activation functions
         self.ls = [layers.Dense(4, 'softplus')]
         self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
-        #self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         

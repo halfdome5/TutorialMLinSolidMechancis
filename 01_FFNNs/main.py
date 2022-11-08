@@ -4,9 +4,9 @@ Task 1: Feed-Forward Neural Networks
 
 ==================
 
-Authors: Dominik K. Klein
+Authors: Jasper Schommartz, Toprak Kis
          
-08/2022
+11/2022
 """
 
 

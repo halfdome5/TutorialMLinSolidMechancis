@@ -39,19 +39,13 @@ def makeLayer(r_type, **kwargs):
         return class_obj(**kwargs)
     raise ValueError('Unknown class type')
     
-    # if sobolev_training: 
-    #       l = SobolevLayer(l)
-    #return l
     
 class SobolevLayer(layers.Layer):
     def __init__(self, l):
         super().__init__()
         self.l = l
     
-    def call(self, x):
-        if tf.keras.backend.is_keras_tensor(x):
-            return x
-        
+    def call(self, x):        
         with tf.GradientTape() as g:
             g.watch(x)
             y = self.l(x)
@@ -61,9 +55,9 @@ class SobolevLayer(layers.Layer):
 class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
-        self.ls = [layers.Dense(4, 'sigmoid')]
-        self.ls += [layers.Dense(4, 'sigmoid')]
-        self.ls += [layers.Dense(4, 'sigmoid')]
+        self.ls = [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus')]
+        self.ls += [layers.Dense(4, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
@@ -138,21 +132,31 @@ main: construction of the NN model
 
 """
 
-def main(sobolev_training=False, **kwargs):
+def main(training_method='function', **kwargs):
     # define input shape
     xs = tf.keras.Input(shape=(2,))
     # define which (custom) layers the model uses
     l_nn = makeLayer(**kwargs)
     ys = l_nn(xs)
-    # apply sobolev training
-    if sobolev_training: 
-        dys = SobolevLayer(l_nn)(xs)
-        # l_sobolev = SobolevLayer(l_nn)
-        # dys = l_sobolev(xs)
-        # dys = l_sobolev(xs)
-        # dys = SobolevLayer(l_nn).build()(xs)
+
     # connect input and output
-    model = tf.keras.Model(inputs = [xs], outputs = [ys, dys])
+    if training_method == 'function': 
+        # training using only functional values
+        model = tf.keras.Model(inputs=[xs], outputs=[ys])
+        
+    elif training_method == 'sobolev': 
+        # traning using gradients and functional values
+        # create sobolev layer
+        dys = SobolevLayer(l_nn)(xs)
+        model = tf.keras.Model(inputs = [xs], outputs = [ys, dys])
+        
+    elif training_method == 'gradient':
+        # training using only gradients
+        dys = SobolevLayer(l_nn)(xs)
+        model = tf.keras.Model(inputs = [xs], outputs = [dys])
+        
+    else: raise ValueError('Unkown training method')
+    
     # define optimizer and loss function
     model.compile('adam', 'mse')
     return model

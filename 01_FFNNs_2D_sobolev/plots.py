@@ -61,34 +61,5 @@ class Plot:
         self.ax.set_xlabel(self.label_dict['x'])
         self.ax.set_ylabel(self.label_dict['y'])
         self.ax.set_zlabel(self.label_dict['z'])
+        #self.ax.set_title('Training on functional value and gradient')
         plt.show()
-        
-    
-
-# def plot_data(x, y, dim):
-    
-#     plt.figure(dpi=600)
-#     ax = plt.axes(projection='3d')
-#     ax.grid()
-    
-#     ax.scatter(xs[:,0], xs[:,1], ys, c='green', label='calibration data',)
-#     ax.set_xlabel('x1')
-#     ax.set_ylabel('x2')
-#     ax.set_zlabel('f')
-#     plt.legend()
-#     plt.show()
-
-# fig = plt.figure(2, dpi=600)
-# ax = plt.axes(projection='3d')
-# ax.grid()
-
-# ax.scatter(xs[:,0], xs[:,1], ys, c='green', label='calibration data')
-# surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]), 
-#                 tf.reshape(ys_pred, [n,m]), cmap=cm.inferno)
-# fig.colorbar(surf, orientation='vertical', pad=0.1)
-
-# ax.set_xlabel('x1')
-# ax.set_ylabel('x2')
-# ax.set_zlabel('f')
-# plt.legend()
-# plt.show()

@@ -32,8 +32,8 @@ import plots as p
 Load model
 
 """
-
-model = lm.main(r_type='InputConvex', sobolev_training=True)
+training_method = 'gradient' # 'function', 'gradient', 'sobolev'
+model = lm.main(r_type='InputConvex', training_method=training_method)
 model.summary()
 
 # %%   
@@ -42,7 +42,6 @@ Load data
 
 """
 
-#xs, ys, dys, n, m = ld.f(r_type='f2Sobolev', show_plot=True)
 xs, ys, dys, reshape_dim = ld.f(r_type='f2Sobolev', show_plot=True)
 
 # %%   
@@ -54,8 +53,15 @@ Model calibration
 t1 = now()
 print(t1)
 
+epochs = 2500
+
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, dys], epochs = 1000,  verbose = 2)
+if training_method == 'function':
+    h = model.fit([xs], [ys], epochs = epochs,  verbose = 2)
+elif training_method == 'sobolev':
+    h = model.fit([xs], [ys, dys], epochs = epochs,  verbose = 2)
+elif training_method == 'gradient':
+    h = model.fit([xs], [dys], epochs = epochs,  verbose = 2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -74,56 +80,65 @@ plt.legend()
 Evaluation
 
 """
+if training_method == 'function':
+    ys_pred = model.predict(xs)
+elif training_method == 'sobolev':
+    ys_pred, dys_pred = model.predict(xs)
+elif training_method == 'gradient':
+    dys_pred = model.predict(xs)
+    
 
-ys_pred, dys_pred = model.predict(xs)
-
-# function value
-label_dict = {'x': 'x1',
-              'y': 'x2',
-              'z': 'f'}
-p_function_value = p.Plot(xs[:,0], xs[:,1], ys_pred, ys, 
-                            reshape_dim, label_dict)
-p_function_value.draw()
-
-# gradient in x1 direction
-label_dict = {'x': 'x1',
-              'y': 'x2',
-              'z': 'dfdx1'}
-p_grad_x1 = p.Plot(xs[:,0], xs[:,1], dys_pred[:,0], dys[:,0], 
-                     reshape_dim, label_dict)
-p_grad_x1.draw()
-
-# gradient in x2 direction
-label_dict = {'x': 'x1',
-              'y': 'x2',
-              'z': 'dfdx2'}
-p_grad_x2 = p.Plot(xs[:,0], xs[:,1], dys_pred[:,1], dys[:,1], 
-                     reshape_dim, label_dict)
-p_grad_x2.draw()
-
-# difference of function value
-label_dict = {'x': 'x1',
-              'y': 'x2',
-              'z': 'f-f_pred'}
-p_function_value = p.Plot(xs[:,0], xs[:,1], ys_pred.T - ys, [], 
-                            reshape_dim, label_dict)
-p_function_value.draw('surf')
-
-# difference of gradient in x1 direction
-label_dict = {'x': 'x1',
-              'y': 'x2',
-              'z': 'dfdx1-dfdx2_pred'}
-p_function_value = p.Plot(xs[:,0], xs[:,1], dys_pred[:,0] - dys[:,0], [], 
-                            reshape_dim, label_dict)
-p_function_value.draw('surf')
-
-# difference of gradient in x2 direction
-label_dict = {'x': 'x1',
-              'y': 'x2',
-              'z': 'dfdx2-dfdx2_pred'}
-p_function_value = p.Plot(xs[:,0], xs[:,1], dys_pred[:,1] - dys[:,1], [], 
-                            reshape_dim, label_dict)
-p_function_value.draw('surf')
+# plot results
+if training_method == 'function' or training_method == 'sobolev':
+    # function value
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$f$'}
+    p_function_value = p.Plot(xs[:,0], xs[:,1], ys_pred, ys, 
+                                reshape_dim, label_dict)
+    p_function_value.draw()
+    
+    # difference of function value
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$f-f_{pred}$'}
+    p_function_value = p.Plot(xs[:,0], xs[:,1], ys_pred.T - ys, [], 
+                                reshape_dim, label_dict)
+    p_function_value.draw('surf')
+    
+    
+if training_method == 'sobolev' or training_method == 'gradient':
+    # gradient in x1 direction
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$\frac{\partial f}{\partial x_1}$'}
+    p_grad_x1 = p.Plot(xs[:,0], xs[:,1], dys_pred[:,0], dys[:,0], 
+                         reshape_dim, label_dict)
+    p_grad_x1.draw()
+    
+    # gradient in x2 direction
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$\frac{\partial f}{\partial x_2}$'}
+    p_grad_x2 = p.Plot(xs[:,0], xs[:,1], dys_pred[:,1], dys[:,1], 
+                         reshape_dim, label_dict)
+    p_grad_x2.draw()
+    
+    # difference of gradient in x1 direction
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$\frac{\partial f}{\partial x_2}-\frac{\partial f_{pred}}{\partial x_2}$'}
+    p_function_value = p.Plot(xs[:,0], xs[:,1], dys_pred[:,0] - dys[:,0], [], 
+                                reshape_dim, label_dict)
+    p_function_value.draw('surf')
+    
+    # difference of gradient in x2 direction
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$\frac{\partial f}{\partial x_2}-\frac{\partial f_{pred}}{\partial x_2}$'}
+    p_function_value = p.Plot(xs[:,0], xs[:,1], dys_pred[:,1] - dys[:,1], [], 
+                                reshape_dim, label_dict)
+    p_function_value.draw('surf')
 
 
 # %% 

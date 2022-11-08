@@ -6,7 +6,7 @@ Task 1: Feed-Forward Neural Networks
 
 Authors: Jasper Schommartz, Troprak Kis
          
-08/2022
+11/2022
 """
 
 

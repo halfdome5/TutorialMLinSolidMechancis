@@ -4,9 +4,9 @@ Task 1: Feed-Forward Neural Networks
 
 ==================
 
-Authors: Dominik K. Klein
+Authors: Jasper Schommartz, Toprak Kis
          
-08/2022
+11/2022
 """
 
 
@@ -33,7 +33,7 @@ Load model
 
 """
 
-model = lm.main(r_type='FeedForward')
+model = lm.main(r_type='InputConvex')
 
 
 # %%   
@@ -54,7 +54,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys], epochs = 1000,  verbose = 2)
+h = model.fit([xs], [ys], epochs = 5000,  verbose = 2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -85,9 +85,10 @@ surf = ax.plot_surface(tf.reshape(xs[:,0], [n,m]), tf.reshape(xs[:,1], [n,m]),
                 tf.reshape(ys_pred, [n,m]), cmap=cm.inferno)
 fig.colorbar(surf, orientation='vertical', pad=0.1)
 
-ax.set_xlabel('x1')
-ax.set_ylabel('x2')
-ax.set_zlabel('f')
+ax.set_xlabel(r'$x_1$')
+ax.set_ylabel(r'$x_2$')
+ax.set_zlabel(r'$f$')
+ax.set_title('ICNN Softplus: layer = 3, nodes = 4, epochs = 5000')
 plt.legend()
 plt.show()
 
@@ -105,4 +106,4 @@ def print_model_parameters():
         print(layer.weights, "\n")
         #print(layer.get_weights())
         
-print_model_parameters()
+#print_model_parameters()
