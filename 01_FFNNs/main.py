@@ -32,7 +32,7 @@ Load model
 
 """
 
-model = lm.main(r_type='FeedForward')
+model = lm.main(r_type='InputConvex')
 model.summary()
 
 
@@ -54,7 +54,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs_c], [ys_c], epochs = 1500,  verbose = 2)
+h = model.fit([xs_c], [ys_c], epochs = 5000,  verbose = 2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -80,6 +80,7 @@ plt.plot(xs, ys, c='black', linestyle='--', label='bathtub function')
 plt.plot(xs, model.predict(xs), label='model', color='red')
 plt.xlabel('x')
 plt.ylabel('y')
+plt.title('ICNN Softplus: layers = 3, nodes = 16, epochs = 5000')
 plt.legend()
 plt.show()
 
@@ -90,6 +91,6 @@ Model parameters
 
 """
 
-for idx, layer in enumerate(model.layers):
-    print(layer.name, layer)
-    print(layer.weights, "\n")
+# for idx, layer in enumerate(model.layers):
+#     print(layer.name, layer)
+#     print(layer.weights, "\n")

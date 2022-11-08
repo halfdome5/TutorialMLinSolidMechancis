@@ -4,7 +4,7 @@ Task 1: Feed-Forward Neural Networks
 
 ==================
 
-Authors: Dominik K. Klein
+Authors: Jasper Schommartz, Troprak Kis
          
 08/2022
 """
@@ -42,9 +42,9 @@ def makeLayer(xs, r_type, **kwargs):
 class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
-        self.ls = [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus')]
+        self.ls = [layers.Dense(16, 'softplus')]
+        self.ls += [layers.Dense(16, 'softplus')]
+        self.ls += [layers.Dense(16, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
@@ -58,11 +58,11 @@ class InputConvexLayer(layers.Layer):
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls = [layers.Dense(16, 'softplus')]
+        self.ls += [layers.Dense(16, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(16, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
-        self.ls += [layers.Dense(1, 'relu', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
     def __call__(self, x):     
         #  create weights by calling on input
