@@ -24,19 +24,32 @@ now = datetime.datetime.now
 
 # %%   
 """
-_x_to_y: custom trainable and non-trainable layer
+_x_to_y: custom trainable layers
 
 """
 
+# factory function for custom layer creation
 def makeLayer(r_type, **kwargs):
     cf = {
         'FeedForward': FeedForwardLayer,
-        'InputConvex': InputConvexLayer
+        'InputConvex': InputConvexLayer,
           }
     class_obj = cf.get(r_type, None)
     if class_obj:
         return class_obj(**kwargs)
-    raise ValueError("Unknown class object")
+    raise ValueError('Unknown class type')
+    
+# layer that computes the gradient of a custom layer
+class SobolevLayer(layers.Layer):
+    def __init__(self, l):
+        super().__init__()
+        self.l = l
+    
+    def call(self, x):        
+        with tf.GradientTape() as g:
+            g.watch(x)
+            y = self.l(x)
+        return g.gradient(y, x)
     
     
 class FeedForwardLayer(layers.Layer):
@@ -48,7 +61,7 @@ class FeedForwardLayer(layers.Layer):
         # scalar-valued output function
         self.ls += [layers.Dense(1)]
         
-    def __call__(self, x):     
+    def call(self, x):     
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
@@ -64,21 +77,31 @@ class InputConvexLayer(layers.Layer):
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
-    def __call__(self, x):     
+    def call(self, x):    
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
         return x
     
+#%%
+"""
+_x_to_y: custom non-trainable layers      
+
+"""
+
 class f1(layers.Layer):
     def __init__(self):
         super().__init__()
         pass
     
     def __call__(self, x):
-        x = x ** 2
-        x = x[:,0] - x[:,1]
-        return x
+        # compute function values
+        y = x ** 2
+        y = y[:,0] - y[:,1]
+        
+        # compute gradient
+        dy = tf.stack([2 * x[:,0], - 2 * x[:,1]], 1)
+        return y, dy
         
 class f2(layers.Layer):
     def __init__(self):
@@ -86,24 +109,34 @@ class f2(layers.Layer):
         pass
     
     def __call__(self, x):
-        x = x ** 2
-        x = x[:,0] + 0.5 * x[:,1]
-        return x
-
-
+        # compute function values
+        y = x ** 2
+        y = y[:,0] + 0.5 * y[:,1]
+        
+        # compute gradient
+        dy = tf.stack([2 * x[:,0], x[:,1]], 1) 
+        
+        return y, dy
+    
 # %%   
 """
 main: construction of the NN model
 
 """
 
-def main(**kwargs):
+def main(loss_weights, **kwargs):
     # define input shape
     xs = tf.keras.Input(shape=(2,))
     # define which (custom) layers the model uses
-    ys = makeLayer(**kwargs)(xs)
-    # connect input and output
-    model = tf.keras.Model(inputs = [xs], outputs = [ys])
+    l_custom = makeLayer(**kwargs)
+    ys = l_custom(xs)
+    # create and build sobolev layer
+    # The sobolev layer computes the gradient and takes a custom layer as
+    # constructor input
+    dys = SobolevLayer(l_custom)(xs)
+    
+    model = tf.keras.Model(inputs=[xs], outputs=[ys, dys])
+    
     # define optimizer and loss function
-    model.compile('adam', 'mse')
+    model.compile('adam', 'mse', loss_weights=loss_weights)
     return model

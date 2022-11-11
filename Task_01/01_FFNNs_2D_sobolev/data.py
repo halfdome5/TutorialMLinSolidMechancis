@@ -21,7 +21,7 @@ import models as lm
 
 # %%
 # own modules
-import plots as p
+import plots as pl
 
 
 # %%
@@ -34,7 +34,6 @@ def makeLayer(r_type, **kwargs):
     cf = {
         'f1': lm.f1,
         'f2': lm.f2,
-        'f2Sobolev': lm.f2Sobolev
           }
     class_obj = cf.get(r_type, None)
     if class_obj:
@@ -77,23 +76,27 @@ Plot data (optional)
 
 def plot_data(xs, ys, dys, reshape_dim):
     
-    label_dict = {'x': 'x1',
-                  'y': 'x2',
-                  'z': 'f'}
-    p_func_value = p.Plot(xs[:,0], xs[:,1], [], ys, reshape_dim, label_dict)
-    p_func_value.draw('scatter')
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$f$'}
+    p = pl.Plot(xs[:,0], xs[:,1], reshape_dim, label_dict)
+    p.add_scatter(ys, label='calibration data')
+    p.draw()
 
-    label_dict = {'x': 'x1',
-                  'y': 'x2',
-                  'z': 'dfdx1'}
-    p_grad_x1 = p.Plot(xs[:,0], xs[:,1], [], dys[:,0], reshape_dim, label_dict)
-    p_grad_x1.draw('scatter')
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$\frac{\partial f}{\partial x_1}$'}
+    p = pl.Plot(xs[:,0], xs[:,1], reshape_dim, label_dict)
+    p.add_scatter(dys[:,0], label='calibration data')
+    p.draw()
 
-    label_dict = {'x': 'x1',
-                  'y': 'x2',
-                  'z': 'dfdx2'}
-    p_grad_x2 = p.Plot(xs[:,0], xs[:,1], [], dys[:,1], reshape_dim, label_dict)
-    p_grad_x2.draw('scatter')
+    label_dict = {'x': r'$x_1$',
+                  'y': r'$x_2$',
+                  'z': r'$\frac{\partial f}{\partial x_2}$'}
+    p = pl.Plot(xs[:,0], xs[:,1], reshape_dim, label_dict)
+    p.add_scatter(dys[:,1], label='calibration data')
+    #p.add_wireframe(dys[:,1])
+    p.draw()
     
    
-#f(r_type='f2Sobolev', show_plot=True)
+#f(r_type='f2', show_plot=True)
