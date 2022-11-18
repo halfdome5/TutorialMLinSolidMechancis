@@ -168,6 +168,8 @@ def plot_stress_tensor_analytical(P, P_ana):
     
 def plot_stress_tensor_prediction(P, P_pred):
     x = np.arange(np.size(P,axis=0)) + 1
+    P = tf.cast(P, dtype='float32')
+    P_pred = tf.cast(P, dtype='float32')
 
     # difference
     fig = plt.figure(dpi=600)

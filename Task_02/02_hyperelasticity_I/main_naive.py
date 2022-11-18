@@ -40,12 +40,18 @@ model.summary()
 
 # %%   
 """
-Load data
+Load calibration data
 
 """
 
-# load deformation, stress and energy data
-F, P, W = ld.read_txt('data/calibration/uniaxial.txt')
+# load deformation, stress and energy data from different data sets and
+# append them
+F_biax, P_biax, W_biax = ld.read_txt('data/calibration/biaxial.txt')
+F_ps, P_ps, W_ps = ld.read_txt('data/calibration/pure_shear.txt')
+F_uniax, P_uniax, W_uniax = ld.read_txt('data/calibration/uniaxial.txt')
+F = tf.concat([F_biax, F_ps, F_uniax], axis=0)
+P = tf.concat([P_biax, P_ps, P_uniax], axis=0)
+W = tf.concat([W_biax, W_ps, W_uniax], axis=0)
 batch_size = tf.shape(W)[0]
 # compute right Chauchy-Green tensor
 C = tf.einsum('ikj,ikl->ijl',F,F)
@@ -93,23 +99,23 @@ P_pred = tf.reshape(ys_pred, [batch_size, 3, 3])
 
 # plot and evaluate stress tensor
 pl.plot_stress_tensor_prediction(P, P_pred)
-mse, mae = compute_metrics(P[:, 0, 0].T, P_pred[:, 0, 0])
+mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
 print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 0, 1].T, P_pred[:, 0, 1])
+mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
 print('''P_12:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 0, 2].T, P_pred[:, 0, 2])
+mse, mae = compute_metrics(P[:, 0, 2], P_pred[:, 0, 2])
 print('''P_13:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 1, 0].T, P_pred[:, 1, 0])
+mse, mae = compute_metrics(P[:, 1, 0], P_pred[:, 1, 0])
 print('''P_21:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 1, 1].T, P_pred[:, 1, 1])
+mse, mae = compute_metrics(P[:, 1, 1], P_pred[:, 1, 1])
 print('''P_22:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 1, 2].T, P_pred[:, 1, 2])
+mse, mae = compute_metrics(P[:, 1, 2], P_pred[:, 1, 2])
 print('''P_23:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 0].T, P_pred[:, 2, 0])
+mse, mae = compute_metrics(P[:, 2, 0], P_pred[:, 2, 0])
 print('''P_31:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 1].T, P_pred[:, 2, 1])
+mse, mae = compute_metrics(P[:, 2, 1], P_pred[:, 2, 1])
 print('''P_32:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 2].T, P_pred[:, 2, 0])
+mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 0])
 print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))    
 
 # plot right Chauchy-Green tensor
