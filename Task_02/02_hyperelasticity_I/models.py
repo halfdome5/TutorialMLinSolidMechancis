@@ -55,9 +55,9 @@ class SobolevLayer(layers.Layer):
 class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
-        self.ls = [layers.Dense(4, 'softplus')]
-        self.ls += [layers.Dense(4, 'softplus')]
-        self.ls += [layers.Dense(4, 'softplus')]
+        self.ls = [layers.Dense(8, 'softplus')]
+        self.ls += [layers.Dense(8, 'softplus')]
+        self.ls += [layers.Dense(8, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(9)]
         
