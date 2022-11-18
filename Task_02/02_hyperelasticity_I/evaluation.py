@@ -18,18 +18,8 @@ import tensorflow as tf
 import models as lm
 import data as ld
 from plots import plot_imported_data, plot_invariants, plot_potential
-from plots import plot_stress_tensor
-
-# %%
-'''
-metrics
-
-'''
-
-def compute_metrics(x1, x2):
-    mse = tf.keras.metrics.mean_squared_error(x1, x2)
-    mae = tf.keras.metrics.mean_absolute_error(x1, x2)
-    return mse, mae
+from plots import plot_stress_tensor_analytical
+from metrics import compute_metrics
 
 # %%
 '''
@@ -38,18 +28,17 @@ evaluate imported F, P and W data
 '''
 
 # load deformation, stress and energy data
-F, P, W = ld.read_txt('data/calibration/biaxial.txt')
+F, P, W = ld.read_txt('data/test/mixed_test.txt')
 
 plot_imported_data(F, P, W)
 
-# %%
 '''
 evaluate invariants
 
 '''
 
 # load invariants from data
-arr = np.loadtxt('data/invariants/I_biaxial.txt')
+arr = np.loadtxt('data/invariants/I_mixed_test.txt')
 
 I1 = arr[:, :1]
 J = arr[:, 1:2]
@@ -96,7 +85,7 @@ evaluta Piola-Kirchhoff stress tensor
 P_analytical = ld.P(ld.W)(F)
 
 # evaluation
-plot_stress_tensor(P, P_analytical)
+plot_stress_tensor_analytical(P, P_analytical)
 mse, mae = compute_metrics(P[:, 0, 0].T, P_analytical[:, 0, 0])
 print('''P_11:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 mse, mae = compute_metrics(P[:, 0, 1].T, P_analytical[:, 0, 1])
@@ -113,6 +102,6 @@ mse, mae = compute_metrics(P[:, 2, 0].T, P_analytical[:, 2, 0])
 print('''P_31:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 mse, mae = compute_metrics(P[:, 2, 1].T, P_analytical[:, 2, 1])
 print('''P_32:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 2].T, P_analytical[:, 2, 2])
+mse, mae = compute_metrics(P[:, 2, 2].T, P_analytical[:, 2, 0])
 print('''P_33:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 

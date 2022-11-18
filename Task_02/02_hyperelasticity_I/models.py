@@ -59,7 +59,7 @@ class FeedForwardLayer(layers.Layer):
         self.ls += [layers.Dense(4, 'softplus')]
         self.ls += [layers.Dense(4, 'softplus')]
         # scalar-valued output function
-        self.ls += [layers.Dense(1)]
+        self.ls += [layers.Dense(9)]
         
     def call(self, x):     
         #  create weights by calling on input
@@ -75,7 +75,7 @@ class InputConvexLayer(layers.Layer):
         self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
         self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
-        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(9, kernel_constraint=non_neg())]
         
     def call(self, x):    
         #  create weights by calling on input
@@ -91,7 +91,7 @@ main: construction of the NN model
 
 def main(loss_weights, **kwargs):
     # define input shape
-    xs = tf.keras.Input(shape=(2,))
+    xs = tf.keras.Input(shape=(6,))
     # define which (custom) layers the model uses
     l_custom = makeLayer(**kwargs)
     ys = l_custom(xs)
