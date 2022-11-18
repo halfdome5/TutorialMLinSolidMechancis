@@ -83,41 +83,6 @@ class InputConvexLayer(layers.Layer):
             x = l(x)
         return x
     
-#%%
-"""
-_x_to_y: custom non-trainable layers      
-
-"""
-
-class f1(layers.Layer):
-    def __init__(self):
-        super().__init__()
-        pass
-    
-    def __call__(self, x):
-        # compute function values
-        y = x ** 2
-        y = y[:,0] - y[:,1]
-        
-        # compute gradient
-        dy = tf.stack([2 * x[:,0], - 2 * x[:,1]], 1)
-        return y, dy
-        
-class f2(layers.Layer):
-    def __init__(self):
-        super().__init__()
-        pass
-    
-    def __call__(self, x):
-        # compute function values
-        y = x ** 2
-        y = y[:,0] + 0.5 * y[:,1]
-        
-        # compute gradient
-        dy = tf.stack([2 * x[:,0], x[:,1]], 1) 
-        
-        return y, dy
-    
 # %%   
 """
 main: construction of the NN model
