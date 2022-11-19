@@ -13,21 +13,58 @@ import modules
 '''
 
 import numpy as np
-from matplotlib import pyplot as plt
 import tensorflow as tf
 from tensorflow.keras import layers
 
-# user-defined modules
-import models as lm
-    
 
-# %%
+# %%    
 '''
-import data: deformation gradient, stress tensor and strain energy density
+data import
 
 '''
+
+def load_stress_strain_data(paths):
+    '''
+    Calls read_txt function and transforms the data into a suitable form for 
+    the NN. The objectivity condition is fulfilled by using using six
+    indepented components of C instead of nine components of F.
+
+    '''
+    # initialize lists
+    n = len(paths)
+    cs = []
+    ps = []
+    ws = []
+    batch_sizes = np.empty(n, dtype='int32')
+    # iterate over files
+    for i, path in enumerate(paths):
+        # read data from path
+        F, P, W = read_txt(path)
+        # get batch size of that data set
+        batch_sizes[i] = tf.shape(W)[0]
+        # use right Cauchy-Green tensor for fulfillment of objectivity condition
+        C = tf.einsum('ikj,ikl->ijl',F,F)
+        # reshape matrices to Voigt notation
+        tmp = tf.reshape(C, [batch_sizes[i], 9])
+        cs.append(tf.concat([tmp[:,:3], tmp[:,4:6], tmp[:,8:]], axis=1)) # drop dependent values
+        ps.append(tf.reshape(P, [batch_sizes[i], 9]))
+        ws.append(W)
+        
+    # concatenate and convert to tensorflow tensor
+    cs = tf.concat(cs, axis=0)
+    ps = tf.concat(ps, axis=0)
+    ws = tf.concat(ws, axis=0)
+        
+    return cs, ps, ws, batch_sizes
+
+
 
 def read_txt(path):
+    '''
+    Reads deformation gradient F, Piola-Kirchhoff stress tensor and the strain
+    energy density from a text file in path.
+
+    '''
     arr = np.loadtxt(path)
     
     nrows = np.size(arr, axis=0)

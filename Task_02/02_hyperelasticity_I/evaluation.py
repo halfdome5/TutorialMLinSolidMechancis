@@ -12,10 +12,8 @@ import modules
 
 '''
 import numpy as np
-import tensorflow as tf
 
 # user defined modules
-import models as lm
 import data as ld
 from plots import plot_imported_data, plot_invariants, plot_potential
 from plots import plot_stress_tensor_analytical

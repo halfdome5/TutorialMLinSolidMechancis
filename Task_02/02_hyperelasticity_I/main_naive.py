@@ -44,21 +44,13 @@ Load calibration data
 
 """
 
-# load deformation, stress and energy data from different data sets and
-# append them
-F_biax, P_biax, W_biax = ld.read_txt('data/calibration/biaxial.txt')
-F_ps, P_ps, W_ps = ld.read_txt('data/calibration/pure_shear.txt')
-F_uniax, P_uniax, W_uniax = ld.read_txt('data/calibration/uniaxial.txt')
-F = tf.concat([F_biax, F_ps, F_uniax], axis=0)
-P = tf.concat([P_biax, P_ps, P_uniax], axis=0)
-W = tf.concat([W_biax, W_ps, W_uniax], axis=0)
-batch_size = tf.shape(W)[0]
-# compute right Chauchy-Green tensor
-C = tf.einsum('ikj,ikl->ijl',F,F)
-# use six intependent components as input
-xs = tf.reshape(C, [batch_size, 9])[:,:6]
-# reshape output
-ys = tf.reshape(P, [batch_size, 9])
+# select load cases for calibration
+paths = [
+    'data/calibration/biaxial.txt',
+    'data/calibration/pure_shear.txt',
+    'data/calibration/uniaxial.txt'
+    ]
+xs, ys, _, batch_sizes = ld.load_stress_strain_data(paths)
 
 # %%   
 """
@@ -70,7 +62,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, np.zeros([batch_size,6])], epochs=5000, verbose=2)
+h = model.fit([xs], [ys, np.zeros([batch_sizes.sum(),6])], epochs=5000, verbose=2)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -91,35 +83,75 @@ Evaluation
 
 """
 
+# selecte load cases for testing
+paths = [
+    'data/calibration/biaxial.txt',
+    'data/calibration/pure_shear.txt',
+    'data/calibration/uniaxial.txt',
+    'data/test/biax_test.txt',
+    'data/test/mixed_test.txt'
+    ]
 
-ys_pred, dys_pred = model.predict(xs)
+titles = [
+    r'Biaxial calibration',
+    r'Pure shear calibration',
+    r'Uniaxial calibration',
+    r'Biaxial test',
+    r'Mixed test'
+    ]
 
-# reshape Voigt vector to matrix
-P_pred = tf.reshape(ys_pred, [batch_size, 3, 3])
+fnames = [
+    'biaxial',
+    'pure_shear',
+    'uniaxial',
+    'biax_test',
+    'mixed_test'
+    ]
 
-# plot and evaluate stress tensor
-pl.plot_stress_tensor_prediction(P, P_pred)
-mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
-print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
-print('''P_12:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 0, 2], P_pred[:, 0, 2])
-print('''P_13:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 1, 0], P_pred[:, 1, 0])
-print('''P_21:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 1, 1], P_pred[:, 1, 1])
-print('''P_22:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 1, 2], P_pred[:, 1, 2])
-print('''P_23:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 0], P_pred[:, 2, 0])
-print('''P_31:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 1], P_pred[:, 2, 1])
-print('''P_32:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 0])
-print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))    
 
-# plot right Chauchy-Green tensor
-pl.plot_right_cauchy_green_tensor(C)
+
+# evaluate each data set separately
+for i, path in enumerate(paths):
+    # reference data
+    xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
+    
+    # predict using the trained model
+    ys_pred, dys_pred = model.predict(xs)
+
+    # reshape results from Voigt vector to matrix
+    P = tf.reshape(ys, [batch_size, 3, 3])
+    P_pred = tf.reshape(ys_pred, [batch_size, 3, 3]) 
+    
+    # plot right Chauchy-Green tensor
+    pl.plot_right_cauchy_green_tensor(xs, titles[i], fnames[i])
+    
+    # plot stress tensor
+    pl.plot_stress_tensor_prediction(P, P_pred, titles[i], fnames[i])
+    
+    # compute and print errors
+    print('''------------------------------------
+--- {} ---
+------------------------------------'''.format(path))
+    mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
+    print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
+    print('''P_12:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 0, 2], P_pred[:, 0, 2])
+    print('''P_13:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 1, 0], P_pred[:, 1, 0])
+    print('''P_21:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 1, 1], P_pred[:, 1, 1])
+    print('''P_22:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 1, 2], P_pred[:, 1, 2])
+    print('''P_23:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 2, 0], P_pred[:, 2, 0])
+    print('''P_31:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 2, 1], P_pred[:, 2, 1])
+    print('''P_32:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+    mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
+    print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))   
+
+
 
 # %% 
 """
