@@ -17,24 +17,51 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 
+# %%
+'''
+pre-processing
+
+'''
+
+def reshape_input(Cs, Ps):
+    batch_size = Cs.shape[0]
+    # reshape to voigt notation
+    cs_tmp = tf.reshape(Cs, [batch_size, 9])
+    ps = tf.reshape(Ps, [batch_size, 9])
+    # drop dependent values
+    cs = tf.concat([cs_tmp[:,:3], cs_tmp[:,4:6], cs_tmp[:,8:]], axis=1)
+    return cs, ps
+
+def get_sample_weights(Ps, batch_sizes):
+    norms = tf.norm(Ps, axis=[1,2])
+    w = np.zeros(norms.shape)
+    for i in range(batch_sizes.shape[0]):
+        il = tf.math.reduce_sum(batch_sizes[:i])
+        iu = tf.math.reduce_sum(batch_sizes[:i+1])
+        
+        w[il:iu] = tf.math.reduce_sum(norms[il:iu]) / batch_sizes[i]
+        
+    return w ** (-1)
+
+
+
 # %%    
 '''
 data import
 
-'''
+''' 
 
 def load_stress_strain_data(paths):
     '''
-    Calls read_txt function and transforms the data into a suitable form for 
-    the NN. The objectivity condition is fulfilled by using using six
+    Calls read_txt function. The objectivity condition is fulfilled by using using six
     indepented components of C instead of nine components of F.
 
     '''
     # initialize lists
     n = len(paths)
-    cs = []
-    ps = []
-    ws = []
+    Cs = []
+    Ps = []
+    Ws = []
     batch_sizes = np.empty(n, dtype='int32')
     # iterate over files
     for i, path in enumerate(paths):
@@ -45,17 +72,20 @@ def load_stress_strain_data(paths):
         # use right Cauchy-Green tensor for fulfillment of objectivity condition
         C = tf.einsum('ikj,ikl->ijl',F,F)
         # reshape matrices to Voigt notation
-        tmp = tf.reshape(C, [batch_sizes[i], 9])
-        cs.append(tf.concat([tmp[:,:3], tmp[:,4:6], tmp[:,8:]], axis=1)) # drop dependent values
-        ps.append(tf.reshape(P, [batch_sizes[i], 9]))
-        ws.append(W)
+        #tmp = tf.reshape(C, [batch_sizes[i], 9])
+        Cs.append(C)
+        Ps.append(P)
+        Ws.append(W)
+        #cs.append(tf.concat([tmp[:,:3], tmp[:,4:6], tmp[:,8:]], axis=1)) # drop dependent values
+        #ps.append(tf.reshape(P, [batch_sizes[i], 9]))
+        #ws.append(W)
         
     # concatenate and convert to tensorflow tensor
-    cs = tf.concat(cs, axis=0)
-    ps = tf.concat(ps, axis=0)
-    ws = tf.concat(ws, axis=0)
+    Cs = tf.concat(Cs, axis=0)
+    Ps = tf.concat(Ps, axis=0)
+    Ws = tf.concat(Ws, axis=0)
         
-    return cs, ps, ws, batch_sizes
+    return Cs, Ps, Ws, batch_sizes
 
 
 

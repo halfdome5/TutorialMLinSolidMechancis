@@ -50,7 +50,22 @@ paths = [
     'data/calibration/pure_shear.txt',
     'data/calibration/uniaxial.txt'
     ]
-xs, ys, _, batch_sizes = ld.load_stress_strain_data(paths)
+#xs, ys, _, batch_sizes = ld.load_stress_strain_data(paths)
+Cs, Ps, _, batch_sizes = ld.load_stress_strain_data(paths)
+
+# %%
+'''
+Preprocessing
+
+'''
+
+# apply load weighting strategy
+sw = ld.get_sample_weights(Ps, batch_sizes)
+#sw = np.zeros(np.sum(batch_sizes))
+  
+# reshape inputs
+xs, ys = ld.reshape_input(Cs, Ps)
+
 
 # %%   
 """
@@ -62,7 +77,10 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, np.zeros([batch_sizes.sum(),6])], epochs=5000, verbose=2)
+h = model.fit([xs], [ys, np.zeros([batch_sizes.sum(),6])], 
+              epochs=5000,
+              verbose=2,
+              sample_weight=sw)
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate the model')
@@ -113,7 +131,11 @@ fnames = [
 # evaluate each data set separately
 for i, path in enumerate(paths):
     # reference data
-    xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
+    #xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
+    Cs, Ps, _, [batch_size] = ld.load_stress_strain_data([path])
+    
+    # reshape
+    xs, ys = ld.reshape_input(Cs, Ps)
     
     # predict using the trained model
     ys_pred, dys_pred = model.predict(xs)
