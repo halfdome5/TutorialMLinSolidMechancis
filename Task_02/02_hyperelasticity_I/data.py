@@ -70,15 +70,11 @@ def load_stress_strain_data(paths):
         # get batch size of that data set
         batch_sizes[i] = tf.shape(W)[0]
         # use right Cauchy-Green tensor for fulfillment of objectivity condition
-        C = tf.einsum('ikj,ikl->ijl',F,F)
+        C = tf.einsum('ikj,ikl->ijl', F, F)
         # reshape matrices to Voigt notation
-        #tmp = tf.reshape(C, [batch_sizes[i], 9])
         Cs.append(C)
         Ps.append(P)
         Ws.append(W)
-        #cs.append(tf.concat([tmp[:,:3], tmp[:,4:6], tmp[:,8:]], axis=1)) # drop dependent values
-        #ps.append(tf.reshape(P, [batch_sizes[i], 9]))
-        #ws.append(W)
         
     # concatenate and convert to tensorflow tensor
     Cs = tf.concat(Cs, axis=0)

@@ -15,6 +15,7 @@ Authors: Jasper Schommartz, Toprak Kis
 Import modules
 
 """
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.constraints import non_neg
@@ -82,6 +83,34 @@ class InputConvexLayer(layers.Layer):
         for l in self.ls:
             x = l(x)
         return x
+
+# %%
+'''
+custom non-trainable layers
+
+'''
+
+class InvariantLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        
+    def __call__(self,x):
+        # transversely isotropic structural tensor
+        G_ti = np.array([[4, 0, 0],
+                      [0, 0.5, 0],
+                      [0, 0, 0.5]])
+        # transpose F and compute right Cauchy-Green tensor
+        C = tf.einsum('ikj,ikl->ijl',x,x)
+        # compute invariants
+        I1 = tf.linalg.trace(C)
+        J = tf.linalg.det(x)
+        I4 = tf.linalg.trace(C @ G_ti)
+        
+        C_inv = tf.linalg.inv(C)
+        I3 = tf.linalg.det(C)
+        Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
+        I5 = tf.linalg.trace(Cof_C @ G_ti)
+        return I1, J, I4, I5
     
 # %%   
 """
