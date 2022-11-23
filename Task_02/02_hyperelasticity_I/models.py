@@ -23,23 +23,64 @@ import datetime
 now = datetime.datetime.now
 
 
+# %%
+'''
+factory method
+'''
+
+def makeLayer(r_type, **kwargs):
+    cf = {
+        'Naive': NaiveLayer,
+        'PhysicsAugmented': PhysicsAugmentedLayer
+        }
+    class_obj = cf.get(r_type, None)
+    if class_obj:
+        return class_obj(**kwargs)
+    raise ValueError('Unknown class type')
+
+# %%
+'''
+wrapper layers
+
+'''
+    
+class NaiveLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        # define non-trainable layers
+        self.ls = [RightCauchyGreenLayer()]
+        self.ls += [layers.Flatten()]
+        self.ls += [IndependentValuesLayer()]
+        self.ls += [FeedForwardLayer()]
+        self.ls += [layers.Reshape((3,3))]
+        
+    def __call__(self, x):
+        for l in self.ls:
+            x = l(x)
+        return x
+    
+class PhysicsAugmentedLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        # define non-trainable layers
+        self.lC = RightCauchyGreenLayer()
+        self.lI = InvariantLayer()
+        # define neural network
+        self.lNN = InputConvexLayer()
+    
+    def __call__(self, x):
+        y = self.lC(x)
+        y = self.lI(x, y)
+        y = self.lNN(y)
+        return y
+
 # %%   
 """
 _x_to_y: custom trainable layers
 
 """
 
-# factory function for custom layer creation
-def makeLayer(r_type, **kwargs):
-    cf = {
-        'FeedForward': FeedForwardLayer,
-        'InputConvex': InputConvexLayer,
-          }
-    class_obj = cf.get(r_type, None)
-    if class_obj:
-        return class_obj(**kwargs)
-    raise ValueError('Unknown class type')
-    
+  
 # layer that computes the gradient of a custom layer
 class SobolevLayer(layers.Layer):
     def __init__(self, l):
@@ -56,6 +97,7 @@ class SobolevLayer(layers.Layer):
 class FeedForwardLayer(layers.Layer):
     def __init__(self):
         super().__init__()
+        # define hidden layers with activation function
         self.ls = [layers.Dense(8, 'softplus')]
         self.ls += [layers.Dense(8, 'softplus')]
         self.ls += [layers.Dense(8, 'softplus')]
@@ -72,11 +114,11 @@ class InputConvexLayer(layers.Layer):
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(4, 'softplus')]
-        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
+        self.ls = [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
-        self.ls += [layers.Dense(9, kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
     def call(self, x):    
         #  create weights by calling on input
@@ -90,27 +132,48 @@ custom non-trainable layers
 
 '''
 
+class RightCauchyGreenLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        
+    def __call__(self, F):
+        return tf.einsum('ikj,ikl->ijl', F, F)
+    
+
 class InvariantLayer(layers.Layer):
     def __init__(self):
         super().__init__()
         
-    def __call__(self,x):
+    def __call__(self, F, C):
         # transversely isotropic structural tensor
         G_ti = np.array([[4, 0, 0],
                       [0, 0.5, 0],
                       [0, 0, 0.5]])
-        # transpose F and compute right Cauchy-Green tensor
-        C = tf.einsum('ikj,ikl->ijl',x,x)
         # compute invariants
         I1 = tf.linalg.trace(C)
-        J = tf.linalg.det(x)
+        J = tf.linalg.det(F)
         I4 = tf.linalg.trace(C @ G_ti)
         
         C_inv = tf.linalg.inv(C)
         I3 = tf.linalg.det(C)
-        Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
+        #Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
+        #Cof_C = tf.tensordot(I3, C_inv, axis=0)
+        try:
+            Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
+        except:
+            Cof_C = C_inv
         I5 = tf.linalg.trace(Cof_C @ G_ti)
-        return I1, J, I4, I5
+        return tf.stack([I1, J, -J, I4, I5], axis=1)
+    
+    
+class IndependentValuesLayer(layers.Layer):
+    def __init__(self):
+        super().__init__()
+        
+    def __call__(self, x):
+        split1, _, split2, _,split3 = tf.split(x, [3, 1, 2, 2, 1], axis=1)
+        return tf.concat([split1, split2, split3], axis=1)
+    
     
 # %%   
 """
@@ -120,14 +183,12 @@ main: construction of the NN model
 
 def main(loss_weights, **kwargs):
     # define input shape
-    xs = tf.keras.Input(shape=(6,))
+    xs = tf.keras.Input(shape=(3,3))
     # define which (custom) layers the model uses
-    l_custom = makeLayer(**kwargs)
-    ys = l_custom(xs)
+    l_nn = makeLayer(**kwargs)
+    ys = l_nn(xs)
     # create and build sobolev layer
-    # The sobolev layer computes the gradient and takes a custom layer as
-    # constructor input
-    dys = SobolevLayer(l_custom)(xs)
+    dys = SobolevLayer(l_nn)(xs)
     
     model = tf.keras.Model(inputs=[xs], outputs=[ys, dys])
     

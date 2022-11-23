@@ -45,7 +45,8 @@ I5 = arr[:, 3:]
 invariants = [I1, J, I4, I5]
 
 # compute analytical invariants
-analytical_invariants = ld.compute_invariants(F)
+I = ld.compute_invariants(F)
+analytical_invariants = [I[:,0], I[:,1], I[:,3], I[:,4]]
 
 # evaluate invariants
 plot_invariants(invariants, analytical_invariants)

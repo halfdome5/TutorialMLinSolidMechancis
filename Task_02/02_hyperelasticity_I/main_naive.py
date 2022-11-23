@@ -35,7 +35,7 @@ Load model
 
 """
 lw = [1, 0]     # output_1 = function value, output_2 = gradient
-model = lm.main(r_type='FeedForward', loss_weights=lw)
+model = lm.main(r_type='Naive', loss_weights=lw)
 model.summary()
 
 # %%   
@@ -50,8 +50,10 @@ paths = [
     'data/calibration/pure_shear.txt',
     'data/calibration/uniaxial.txt'
     ]
-#xs, ys, _, batch_sizes = ld.load_stress_strain_data(paths)
-Cs, Ps, _, batch_sizes = ld.load_stress_strain_data(paths)
+
+# xs = F, ys = P
+xs, _, ys, batch_sizes = ld.load_stress_strain_data(paths)
+dys = np.zeros(xs.shape) # placeholder
 
 # %%
 '''
@@ -60,11 +62,8 @@ Preprocessing
 '''
 
 # apply load weighting strategy
-#sw = ld.get_sample_weights(Ps, batch_sizes)
+#sw = ld.get_sample_weights(xs, batch_sizes)
 sw = np.ones(np.sum(batch_sizes))
-  
-# reshape inputs
-xs, ys = ld.reshape_input(Cs, Ps)
 
 
 # %%   
@@ -77,7 +76,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, np.zeros([batch_sizes.sum(),6])], 
+h = model.fit([xs], [ys, dys], 
               epochs=5000,
               verbose=2,
               sample_weight=sw)
@@ -132,20 +131,16 @@ fnames = [
 for i, path in enumerate(paths):
     # reference data
     #xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
-    Cs, Ps, _, [batch_size] = ld.load_stress_strain_data([path])
-    
-    # reshape
-    xs, ys = ld.reshape_input(Cs, Ps)
+    xs, _, ys, [batch_size] = ld.load_stress_strain_data([path])
     
     # predict using the trained model
-    ys_pred, dys_pred = model.predict(xs)
-
-    # reshape results from Voigt vector to matrix
-    P = tf.reshape(ys, [batch_size, 3, 3])
-    P_pred = tf.reshape(ys_pred, [batch_size, 3, 3]) 
+    ys_pred, _ = model.predict(xs)
+    P = ys
+    P_pred = ys_pred
     
     # plot right Chauchy-Green tensor
-    pl.plot_right_cauchy_green_tensor(xs, titles[i], fnames[i])
+    Cs = tf.einsum('ikj,ikl->ijl', xs, xs)
+    pl.plot_right_cauchy_green_tensor(ld.reshape_C(Cs), titles[i], fnames[i])
     
     # plot stress tensor
     pl.plot_stress_tensor_prediction(P, P_pred, titles[i], fnames[i])
@@ -154,6 +149,8 @@ for i, path in enumerate(paths):
     print('''------------------------------------
 --- {} ---
 ------------------------------------'''.format(path))
+    mse, mae = compute_metrics(ys, ys_pred)
+    print('''W:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
     mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
     print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
     mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
@@ -173,12 +170,7 @@ for i, path in enumerate(paths):
     mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
     print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))   
 
-# check normalization criterion
-xs = np.array([[1, 0, 0, 1, 0, 1],
-              [1, 0, 0, 1, 0, 1]])
-ys_pred, dys_pred = model.predict(xs)
-print(ys_pred)
-print(dys_pred)
+
 
 # %% 
 """

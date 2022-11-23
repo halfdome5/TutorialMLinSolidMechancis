@@ -35,7 +35,7 @@ Load model
 
 """
 lw = [1, 1]     # output_1 = function value, output_2 = gradient
-model = lm.main(r_type='InputConvex', loss_weights=lw)
+model = lm.main(r_type='PhysicsAugmented', loss_weights=lw)
 model.summary()
 
 # %%   
@@ -50,9 +50,9 @@ paths = [
     'data/calibration/pure_shear.txt',
     'data/calibration/uniaxial.txt'
     ]
-#xs, ys, _, batch_sizes = ld.load_stress_strain_data(paths)
-#Cs, Ps, _, batch_sizes = ld.load_stress_strain_data(paths)
-xs, dys, ys, batch_sizes = ld.load_stress_strain_data(paths)
+
+# xs = F, dys = P, ys = W
+xs, ys, dys, batch_sizes = ld.load_stress_strain_data(paths)
 
 # %%
 '''
@@ -65,9 +65,6 @@ sw = ld.get_sample_weights(xs, batch_sizes)
 #sw = np.ones(np.sum(batch_sizes))
   
 # reshape inputs
-#xs, ys = ld.reshape_input(Cs, Ps)
-#xs = ld.reshape(Fs)
-#dys = ld.reshape(Ps)
 ys = tf.reshape(ys,-1)
 
 # %%   
@@ -135,7 +132,7 @@ fnames = [
 for i, path in enumerate(paths):
     # reference data
     #xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
-    xs, dys, ys, [batch_size] = ld.load_stress_strain_data([path])
+    xs, ys, dys, [batch_size] = ld.load_stress_strain_data([path])
     
     # reshape
     #xs, ys = ld.reshape_input(Cs, Ps)
@@ -163,7 +160,7 @@ for i, path in enumerate(paths):
     print('''------------------------------------
 --- {} ---
 ------------------------------------'''.format(path))
-    mse, mae = compute_metrics(ys, ys_pred)
+    mse, mae = compute_metrics(tf.transpose(ys), tf.transpose(ys_pred))
     print('''W:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
     mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
     print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
@@ -184,7 +181,11 @@ for i, path in enumerate(paths):
     mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
     print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))   
 
-
+# evaluate normalization criterion
+xs_I = np.array(np.identity(3))
+ys_I, dys_I = model.predict(xs)
+#print(ys_I)
+#print(dys_I)
 
 # %% 
 """
