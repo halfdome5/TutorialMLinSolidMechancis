@@ -60,8 +60,8 @@ Preprocessing
 '''
 
 # apply load weighting strategy
-sw = ld.get_sample_weights(Ps, batch_sizes)
-#sw = np.ones(np.sum(batch_sizes))
+#sw = ld.get_sample_weights(Ps, batch_sizes)
+sw = np.ones(np.sum(batch_sizes))
   
 # reshape inputs
 xs, ys = ld.reshape_input(Cs, Ps)
@@ -173,7 +173,12 @@ for i, path in enumerate(paths):
     mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
     print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))   
 
-
+# check normalization criterion
+xs = np.array([[1, 0, 0, 1, 0, 1],
+              [1, 0, 0, 1, 0, 1]])
+ys_pred, dys_pred = model.predict(xs)
+print(ys_pred)
+print(dys_pred)
 
 # %% 
 """

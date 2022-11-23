@@ -35,7 +35,7 @@ Load model
 
 """
 lw = [1, 1]     # output_1 = function value, output_2 = gradient
-model = lm.main(r_type='FeedForward', loss_weights=lw)
+model = lm.main(r_type='InputConvex', loss_weights=lw)
 model.summary()
 
 # %%   
@@ -142,7 +142,7 @@ for i, path in enumerate(paths):
     
     # predict using the trained model
     ys_pred, dys_pred = model.predict(xs)
-    P = xs
+    P = dys
     P_pred = dys_pred
 
     # reshape results from Voigt vector to matrix

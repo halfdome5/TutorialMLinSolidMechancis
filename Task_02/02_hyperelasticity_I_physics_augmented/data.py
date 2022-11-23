@@ -16,6 +16,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers
 
+# user-defined models
+import models as lm
 
 # %%
 '''
@@ -141,29 +143,34 @@ class P(layers.Layer):
 
 # additional functions called in layer
 def W(F):
-    I1, J, I4, I5 = compute_invariants(F)
-    return compute_potential(I1, J, I4, I5)
+    I = compute_invariants(F)
+    return compute_potential(I[:,0], I[:,1], I[:,3], I[:,4])
 
 def compute_potential(I1, J, I4, I5):
     W = 8 * I1 + 10 * J**2 - 56 * tf.math.log(J) \
         + 0.25 * (I4 ** 2 + I5 ** 2) - 44
     return W
 
+# def compute_invariants(F):
+#     # transversely isotropic structural tensor
+#     G_ti = np.array([[4, 0, 0],
+#                   [0, 0.5, 0],
+#                   [0, 0, 0.5]])
+#     # transpose F and compute right Cauchy-Green tensor
+#     C = tf.einsum('ikj,ikl->ijl',F,F)
+#     # compute invariants
+#     I1 = tf.linalg.trace(C)
+#     J = tf.linalg.det(F)
+#     I4 = tf.linalg.trace(C @ G_ti)
+    
+#     C_inv = tf.linalg.inv(C)
+#     I3 = tf.linalg.det(C)
+#     Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
+#     I5 = tf.linalg.trace(Cof_C @ G_ti)
+    
+#     return I1, J, I4, I5
+
 def compute_invariants(F):
-    # transversely isotropic structural tensor
-    G_ti = np.array([[4, 0, 0],
-                  [0, 0.5, 0],
-                  [0, 0, 0.5]])
-    # transpose F and compute right Cauchy-Green tensor
-    C = tf.einsum('ikj,ikl->ijl',F,F)
-    # compute invariants
-    I1 = tf.linalg.trace(C)
-    J = tf.linalg.det(F)
-    I4 = tf.linalg.trace(C @ G_ti)
-    
-    C_inv = tf.linalg.inv(C)
-    I3 = tf.linalg.det(C)
-    Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
-    I5 = tf.linalg.trace(Cof_C @ G_ti)
-    
-    return I1, J, I4, I5
+    C = lm.RightCauchyGreenLayer()(F)
+    I = lm.InvariantLayer()(F, C)
+    return I

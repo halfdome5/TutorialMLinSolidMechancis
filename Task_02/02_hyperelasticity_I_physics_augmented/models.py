@@ -48,7 +48,7 @@ class PotentialLayer(layers.Layer):
         self.lC = RightCauchyGreenLayer()
         self.lI = InvariantLayer()
         # define neural network
-        self.lNN = FeedForwardLayer()
+        self.lNN = InputConvexLayer()
     
     def __call__(self, x):
         y = self.lC(x)
@@ -89,11 +89,11 @@ class InputConvexLayer(layers.Layer):
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(4, 'softplus')]
-        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(4, 'softplus', kernel_constraint=non_neg())]
+        self.ls = [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
-        self.ls += [layers.Dense(9, kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
     def call(self, x):    
         #  create weights by calling on input
@@ -132,12 +132,10 @@ class InvariantLayer(layers.Layer):
         I3 = tf.linalg.det(C)
         #Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
         #Cof_C = tf.tensordot(I3, C_inv, axis=0)
-        Cof_C = C_inv
         try:
-            for i, I3i in I3:
-                Cof_C[i,:,:] = C_inv[i,:,:] * I3i
+            Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
         except:
-            pass
+            Cof_C = C_inv
         #Cof_C = I3 * C_inv
         #Cof_C = tf.multiply(C_inv, I3)
         I5 = tf.linalg.trace(Cof_C @ G_ti)
