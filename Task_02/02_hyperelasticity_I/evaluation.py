@@ -26,7 +26,7 @@ evaluate imported F, P and W data
 '''
 
 # load deformation, stress and energy data
-F, P, W = ld.read_txt('data/calibration/biaxial.txt')
+F, P, W = ld.read_txt('data/test/mixed_test.txt')
 
 plot_imported_data(F, P, W)
 
@@ -36,7 +36,7 @@ evaluate invariants
 '''
 
 # load invariants from data
-arr = np.loadtxt('data/invariants/I_biaxial.txt')
+arr = np.loadtxt('data/invariants/I_mixed_test.txt')
 
 I1 = arr[:, :1]
 J = arr[:, 1:2]

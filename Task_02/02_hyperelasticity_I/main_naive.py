@@ -62,8 +62,8 @@ Preprocessing
 '''
 
 # apply load weighting strategy
-#sw = ld.get_sample_weights(xs, batch_sizes)
-sw = np.ones(np.sum(batch_sizes))
+sw = ld.get_sample_weights(xs, batch_sizes)
+#sw = np.ones(np.sum(batch_sizes))
 
 
 # %%   
@@ -133,6 +133,11 @@ for i, path in enumerate(paths):
     #xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
     xs, _, ys, [batch_size] = ld.load_stress_strain_data([path])
     
+    # Evaluate the model on the test data using `evaluate`
+    print("\nEvaluate on test data: {}".format(titles[i]))
+    results = model.evaluate(xs, [ys, dys[:batch_size]])
+    #print("test loss", results)
+    
     # predict using the trained model
     ys_pred, _ = model.predict(xs)
     P = ys
@@ -146,29 +151,27 @@ for i, path in enumerate(paths):
     pl.plot_stress_tensor_prediction(P, P_pred, titles[i], fnames[i])
     
     # compute and print errors
-    print('''------------------------------------
---- {} ---
-------------------------------------'''.format(path))
-    mse, mae = compute_metrics(ys, ys_pred)
-    print('''W:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
-    print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
-    print('''P_12:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 0, 2], P_pred[:, 0, 2])
-    print('''P_13:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 1, 0], P_pred[:, 1, 0])
-    print('''P_21:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 1, 1], P_pred[:, 1, 1])
-    print('''P_22:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 1, 2], P_pred[:, 1, 2])
-    print('''P_23:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 2, 0], P_pred[:, 2, 0])
-    print('''P_31:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 2, 1], P_pred[:, 2, 1])
-    print('''P_32:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
-    print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))   
+#     print('''------------------------------------
+# --- {} ---
+# ------------------------------------'''.format(path))
+#     mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
+#     print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
+#     print('''P_12:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 0, 2], P_pred[:, 0, 2])
+#     print('''P_13:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 1, 0], P_pred[:, 1, 0])
+#     print('''P_21:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 1, 1], P_pred[:, 1, 1])
+#     print('''P_22:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 1, 2], P_pred[:, 1, 2])
+#     print('''P_23:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 2, 0], P_pred[:, 2, 0])
+#     print('''P_31:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 2, 1], P_pred[:, 2, 1])
+#     print('''P_32:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
+#     mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
+#     print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
 
 
 

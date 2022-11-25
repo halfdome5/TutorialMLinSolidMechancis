@@ -45,13 +45,24 @@ Load calibration data
 """
 
 # select load cases for calibration
+# paths = [
+#     'data/calibration/biaxial.txt',
+#     'data/calibration/pure_shear.txt',
+#     'data/calibration/uniaxial.txt'
+#     ]
+
 paths = [
-    'data/calibration/biaxial.txt',
-    'data/calibration/pure_shear.txt',
-    'data/calibration/uniaxial.txt'
+    'data/calibration/biaxial.txt'
     ]
 
-# xs = F, dys = P, ys = W
+# paths = [
+#     'data/calibration/pure_shear.txt'
+#     ]
+
+# paths = [
+#     'data/calibration/uniaxial.txt'
+#     ]
+
 xs, ys, dys, batch_sizes = ld.load_stress_strain_data(paths)
 
 # %%
@@ -62,7 +73,6 @@ Preprocessing
 
 # apply load weighting strategy
 sw = ld.get_sample_weights(xs, batch_sizes)
-#sw = np.ones(np.sum(batch_sizes))
   
 # reshape inputs
 ys = tf.reshape(ys,-1)
@@ -126,25 +136,34 @@ fnames = [
     'mixed_test'
     ]
 
-
+# evaluate normalization criterion
+ys_I, dys_I = model.predict(np.array([np.identity(3)]))
+print('\nW(I) =\t{}'.format(ys_I[0,0]))
+print('P(I) =\t{}\n\t\t{}\n\t\t{}'.format(dys_I[0,0], dys_I[0,1], dys_I[0,2]))
 
 # evaluate each data set separately
 for i, path in enumerate(paths):
     # reference data
-    #xs, ys, _, [batch_size] = ld.load_stress_strain_data([path])
     xs, ys, dys, [batch_size] = ld.load_stress_strain_data([path])
     
-    # reshape
-    #xs, ys = ld.reshape_input(Cs, Ps)
     
     # predict using the trained model
     ys_pred, dys_pred = model.predict(xs)
     P = dys
     P_pred = dys_pred
-
-    # reshape results from Voigt vector to matrix
-    #P = tf.reshape(dys, [batch_size, 3, 3])
-    #P_pred = tf.reshape(dys_pred, [batch_size, 3, 3]) 
+    
+    # Potential correction - for P training
+    # shift reference value ys by normalization offset predicted value in 
+    # the oppositde direction to ensure reasonable 
+    # results from tensorflow evalutation function
+    ys_eval = ys + ys_I[0,0] 
+    # ys_eval = ys
+    ys_pred = ys_pred - ys_I[0,0]
+    
+    # Evaluate the model on the test data using `evaluate`
+    print("\nEvaluate on test data: {}".format(titles[i]))
+    results = model.evaluate(xs, [ys_eval, dys])
+    
     
     # plot right Chauchy-Green tensor
     Cs = tf.einsum('ikj,ikl->ijl',xs,xs)
@@ -155,37 +174,6 @@ for i, path in enumerate(paths):
     
     # plot stress tensor
     pl.plot_stress_tensor_prediction(P, P_pred, titles[i], fnames[i])
-    
-    # compute and print errors
-    print('''------------------------------------
---- {} ---
-------------------------------------'''.format(path))
-    mse, mae = compute_metrics(tf.transpose(ys), tf.transpose(ys_pred))
-    print('''W:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 0, 0], P_pred[:, 0, 0])
-    print('''P_11:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 0, 1], P_pred[:, 0, 1])
-    print('''P_12:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 0, 2], P_pred[:, 0, 2])
-    print('''P_13:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 1, 0], P_pred[:, 1, 0])
-    print('''P_21:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 1, 1], P_pred[:, 1, 1])
-    print('''P_22:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 1, 2], P_pred[:, 1, 2])
-    print('''P_23:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 2, 0], P_pred[:, 2, 0])
-    print('''P_31:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 2, 1], P_pred[:, 2, 1])
-    print('''P_32:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))
-    mse, mae = compute_metrics(P[:, 2, 2], P_pred[:, 2, 2])
-    print('''P_33:\tMSE = {}, \tMAE = {}\n'''.format(mse, mae))   
-
-# evaluate normalization criterion
-xs_I = np.array(np.identity(3))
-ys_I, dys_I = model.predict(xs)
-#print(ys_I)
-#print(dys_I)
 
 # %% 
 """

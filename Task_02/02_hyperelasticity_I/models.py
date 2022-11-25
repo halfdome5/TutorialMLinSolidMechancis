@@ -156,8 +156,7 @@ class InvariantLayer(layers.Layer):
         
         C_inv = tf.linalg.inv(C)
         I3 = tf.linalg.det(C)
-        #Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
-        #Cof_C = tf.tensordot(I3, C_inv, axis=0)
+        # catch error if a KerasTensor is passed
         try:
             Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
         except:
