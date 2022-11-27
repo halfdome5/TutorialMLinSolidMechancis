@@ -155,7 +155,10 @@ class InvariantLayer(layers.Layer):
         I4 = tf.linalg.trace(C @ G_ti)
         
         C_inv = tf.linalg.inv(C)
-        I3 = tf.linalg.det(C)
+        # In the 2 lines below, I changed the calculation of I3 a little bit. Now it should be correct.
+        Cof_C = tf.transpose(tf.linalg.inv(C)) * (tf.linalg.det(C))
+        I3 = tf.tensordot(Cof_C,C,axes=1)
+
         # catch error if a KerasTensor is passed
         try:
             Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i,I3i in enumerate(I3)]))
