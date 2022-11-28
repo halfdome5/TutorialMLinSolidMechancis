@@ -9,7 +9,6 @@ Authors: Jasper Schommartz, Toprak Kis
 11/2022
 """
 
-
 # %% [Import modules]
 """
 Import modules
@@ -29,61 +28,77 @@ import plots as pl
 import training
 
 # %%
-'''
-Load calibration data
-'''
 # parameters
-TEST_TRAIN_SPLIT = 0.8
 FNUM = 100
+test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
+#test_train_split = np.array([0.1,0.2])
+JMAX = 5
 
-# create training and test split
-fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
-ftrain, ftest = tf.split(fnum, [int(TEST_TRAIN_SPLIT * (FNUM + 1)), -1])
+loss_weights = [0, 1]
+epochs = 200
+verbose = 0
 
-train_paths = ld.generate_concentric_paths(ftrain)
-test_paths = ld.generate_concentric_paths(ftest)
+# initialization
+mean_train_losses = np.zeros([test_train_split.size, 3])
+mean_test_losses = np.zeros([test_train_split.size, 3])
 
-tmodel = training.PhysicsAugmented()
-tmodel.load(train_paths)
+t1 = now()
+for i, split in enumerate(test_train_split):
+    train_losses_tmp = np.zeros([JMAX,3])
+    test_losses_tmp = np.zeros([JMAX,3])
 
+    for j in range(JMAX):
+        # create training and test split
+        fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
+        ftrain, ftest = tf.split(fnum, [int(split * (FNUM + 1)), -1])
+
+        # load test and train data
+        train_paths = ld.generate_concentric_paths(ftrain)
+        test_paths = ld.generate_concentric_paths(ftest)
+
+        # tmodel = training.PhysicsAugmented(loss_weights=loss_weights,
+        #             epochs=epochs,
+        #             verbose=verbose)
+        tmodel = training.Naive(epochs=epochs, verbose=verbose)
+
+        tmodel.load(train_paths)
+        tmodel.preprocess()
+        tmodel.calibrate()
+
+        # evaluate
+        train_losses_tmp[j,:] = np.mean(tmodel.evaluate(train_paths), axis=0)
+        test_losses_tmp[j,:] = np.mean(tmodel.evaluate(test_paths), axis=0)
+    
+    mean_train_losses[i,:] = np.mean(train_losses_tmp, axis=0)
+    mean_test_losses[i,:] = np.mean(test_losses_tmp, axis=0)
+
+t2 = now()
+print('it took', t2 - t1, '(sec) to calibrate and evaluate all models')
 #%%
-'''
-Pre-processing
+# plot
+fig = plt.figure(dpi=600)
+plt.semilogy(test_train_split,mean_train_losses[:,1] + mean_train_losses[:,2], marker='o', label='loss')
+plt.semilogy(test_train_split,mean_train_losses[:,1], marker='o', label='W loss')
+plt.semilogy(test_train_split,mean_train_losses[:,2], marker='o', label='P loss')
+plt.title('Evaluation on training data')
+plt.xlabel('training fraction')
+plt.ylabel('loss')
+plt.grid()
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.savefig('images/training_loss.png', dpi=fig.dpi, bbox_inches='tight')
 
-'''
-tmodel.preprocess()
+fig = plt.figure(dpi=600)
+plt.semilogy(test_train_split,mean_test_losses[:,1] + mean_test_losses[:,2], marker='o', label='loss')
+plt.semilogy(test_train_split,mean_test_losses[:,1], marker='o', label='W loss')
+plt.semilogy(test_train_split,mean_test_losses[:,2], marker='o', label='P loss')
+plt.title('Evalutation on test data')
+plt.xlabel('training fraction')
+plt.ylabel('loss')
+plt.grid()
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.savefig('images/test_loss.png', dpi=fig.dpi, bbox_inches='tight')
 
-#%%
-'''
-Model calibration
-
-'''
-tmodel.calibrate()
-
-#%%
-''' 
-Evalutation
-
-'''
-# evaluate training data
-print('\nEvaluate on training data:')
-results = tmodel.evaluate(train_paths)
-df_train = pd.DataFrame(results, columns=['loss', 'W loss', 'P loss'])
-df_train['file'] = ftrain
-df_train = df_train[['file', 'loss', 'W loss', 'P loss']]
-df_train.to_csv('out/train.csv', index=False)
-
-# evalutate test data
-print('\nEvalutate on test data:')
-results = tmodel.evaluate(test_paths)
-df_test = pd.DataFrame(results, columns=['loss', 'W loss', 'P loss'])
-df_test['file'] = ftest
-df_test = df_test[['file', 'loss', 'W loss', 'P loss']]
-df_test.to_csv('out/test.csv', index=False)
-
-
-print(df_train.mean()[1:])
-print(df_test.mean()[1:])
+plt.show()
 
 # %%
 """
@@ -91,6 +106,6 @@ Model parameters
 
 """
 
-tmodel.print_model_parameters()
+#tmodel.print_model_parameters()
 
 # %%

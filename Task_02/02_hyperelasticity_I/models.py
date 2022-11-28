@@ -45,7 +45,7 @@ def make_layer(r_type, **kwargs):
 wrapper layers
 
 '''
-    
+
 class NaiveLayer(layers.Layer):
     """ Wrapper layer for naive neural network model """
     def __init__(self):
@@ -56,12 +56,12 @@ class NaiveLayer(layers.Layer):
         self.ls += [IndependentValuesLayer()]
         self.ls += [FeedForwardLayer()]
         self.ls += [layers.Reshape((3,3))]
-        
+  
     def __call__(self, x):
         for l in self.ls:
             x = l(x)
         return x
-    
+
 class PhysicsAugmentedLayer(layers.Layer):
     """ Wrapper layer invariante based physics augmented neural network """
     def __init__(self):
@@ -71,7 +71,7 @@ class PhysicsAugmentedLayer(layers.Layer):
         self.lI = InvariantLayer()
         # define neural network
         self.lNN = InputConvexLayer()
-    
+
     def __call__(self, x):
         y = self.lC(x)
         y = self.lI(x, y)
@@ -89,13 +89,13 @@ class SobolevLayer(layers.Layer):
     def __init__(self, l):
         super().__init__()
         self.l = l
-    
+
     def call(self, x):        
         with tf.GradientTape() as g:
             g.watch(x)
             y = self.l(x)
         return g.gradient(y, x)
-       
+
 class FeedForwardLayer(layers.Layer):
     ''' Layer that implements a feed forward neural network '''
     def __init__(self):
@@ -106,13 +106,13 @@ class FeedForwardLayer(layers.Layer):
         self.ls += [layers.Dense(8, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(9)]
-        
+
     def call(self, x):     
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
         return x
-    
+
 class InputConvexLayer(layers.Layer):
     """ Layer that implements an input convex neural network """
     def __init__(self):
@@ -123,7 +123,7 @@ class InputConvexLayer(layers.Layer):
         self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
-        
+
     def call(self, x):
         #  create weights by calling on input
         for l in self.ls:
@@ -140,16 +140,16 @@ class RightCauchyGreenLayer(layers.Layer):
     ''' Layer that computes the right Cauchy-Green tensor '''
     def __init__(self):
         super().__init__()
-        
+ 
     def __call__(self, F):
         return tf.einsum('ikj,ikl->ijl', F, F)
-    
+
 
 class InvariantLayer(layers.Layer):
     ''' Layer that computes four invariants of a given deformatioin gradient '''
     def __init__(self):
         super().__init__()
-        
+
     def __call__(self, F, C):
         # transversely isotropic structural tensor
         G_ti = np.array([[4, 0, 0],
@@ -159,7 +159,7 @@ class InvariantLayer(layers.Layer):
         I1 = tf.linalg.trace(C)
         J = tf.linalg.det(F)
         I4 = tf.linalg.trace(C @ G_ti)
-        
+
         C_inv = tf.linalg.inv(C)
         I3 = tf.linalg.det(C)
         # catch error if a KerasTensor is passed
@@ -170,16 +170,16 @@ class InvariantLayer(layers.Layer):
         I5 = tf.linalg.trace(Cof_C @ G_ti)
         return tf.stack([I1, J, -J, I4, I5], axis=1)
     
-    
+
 class IndependentValuesLayer(layers.Layer):
     ''' Layer that extracts six independent values of the right Cauchy green tensor '''
     def __init__(self):
         super().__init__()
-        
+
     def __call__(self, x):
         split1, _, split2, _,split3 = tf.split(x, [3, 1, 2, 2, 1], axis=1)
         return tf.concat([split1, split2, split3], 1)
-    
+
     
 # %%   
 """
@@ -196,9 +196,8 @@ def main(loss_weights, **kwargs):
     ys = l_nn(xs)
     # create and build sobolev layer
     dys = SobolevLayer(l_nn)(xs)
-    
+
     model = tf.keras.Model(inputs=[xs], outputs=[ys, dys])
-    
     # define optimizer and loss function
     model.compile('adam', 'mse', loss_weights=loss_weights)
     return model
