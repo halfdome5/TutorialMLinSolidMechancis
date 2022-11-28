@@ -10,7 +10,7 @@ Authors: Jasper Schommartz, Toprak Kis
 """
 
 
-# %%   
+# %% [Import modules]
 """
 Import modules
 
@@ -25,11 +25,10 @@ now = datetime.datetime.now
 import data as ld
 import models as lm
 import plots as pl
-from metrics import compute_metrics
+#from metrics import compute_metrics
 
 
-
-# %%   
+# %%
 """
 Load model
 
@@ -38,7 +37,7 @@ lw = [1, 1]     # output_1 = function value, output_2 = gradient
 model = lm.main(r_type='PhysicsAugmented', loss_weights=lw)
 model.summary()
 
-# %%   
+# %%
 """
 Load calibration data
 
@@ -51,13 +50,13 @@ Load calibration data
 #     'data/calibration/uniaxial.txt'
 #     ]
 
-paths = [
-    'data/calibration/biaxial.txt'
-    ]
-
 # paths = [
-#     'data/calibration/pure_shear.txt'
+#     'data/calibration/biaxial.txt'
 #     ]
+
+paths = [
+    'data/calibration/pure_shear.txt'
+    ]
 
 # paths = [
 #     'data/calibration/uniaxial.txt'
@@ -66,18 +65,18 @@ paths = [
 xs, ys, dys, batch_sizes = ld.load_stress_strain_data(paths)
 
 # %%
-'''
+"""
 Preprocessing
 
-'''
+"""
 
 # apply load weighting strategy
 sw = ld.get_sample_weights(xs, batch_sizes)
-  
+
 # reshape inputs
 ys = tf.reshape(ys,-1)
 
-# %%   
+# %%
 """
 Model calibration
 
@@ -87,7 +86,7 @@ t1 = now()
 print(t1)
 
 tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, dys], 
+h = model.fit([xs], [ys, dys],
               epochs=5000,
               verbose=2,
               sample_weight=sw)
@@ -105,7 +104,7 @@ plt.legend()
 fig.savefig('images/loss.png', dpi=fig.dpi, bbox_inches='tight')
 
 
-# %%   
+# %%
 """
 Evaluation
 
@@ -121,11 +120,11 @@ paths = [
     ]
 
 titles = [
-    r'Biaxial calibration',
-    r'Pure shear calibration',
-    r'Uniaxial calibration',
-    r'Biaxial test',
-    r'Mixed test'
+    'Biaxial calibration',
+    'Pure shear calibration',
+    'Uniaxial calibration',
+    'Biaxial test',
+    'Mixed test'
     ]
 
 fnames = [
@@ -138,44 +137,43 @@ fnames = [
 
 # evaluate normalization criterion
 ys_I, dys_I = model.predict(np.array([np.identity(3)]))
-print('\nW(I) =\t{}'.format(ys_I[0,0]))
-print('P(I) =\t{}\n\t\t{}\n\t\t{}'.format(dys_I[0,0], dys_I[0,1], dys_I[0,2]))
+print(f'\nW(I) =\t{ys_I[0,0]}')
+print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
 
 # evaluate each data set separately
 for i, path in enumerate(paths):
     # reference data
     xs, ys, dys, [batch_size] = ld.load_stress_strain_data([path])
-    
-    
+
     # predict using the trained model
     ys_pred, dys_pred = model.predict(xs)
     P = dys
     P_pred = dys_pred
-    
+
     # Potential correction - for P training
-    # shift reference value ys by normalization offset predicted value in 
-    # the oppositde direction to ensure reasonable 
+    # shift reference value ys by normalization offset predicted value in
+    # the oppositde direction to ensure reasonable
     # results from tensorflow evalutation function
-    ys_eval = ys + ys_I[0,0] 
-    # ys_eval = ys
-    ys_pred = ys_pred - ys_I[0,0]
-    
+    # ys_eval = ys + ys_I[0,0]
+    ys_eval = ys
+    # ys_pred = ys_pred - ys_I[0,0]
+
     # Evaluate the model on the test data using `evaluate`
-    print("\nEvaluate on test data: {}".format(titles[i]))
+    print(f'\nEvaluate on test data: {titles[i]}')
     results = model.evaluate(xs, [ys_eval, dys])
-    
-    
+
+
     # plot right Chauchy-Green tensor
     Cs = tf.einsum('ikj,ikl->ijl',xs,xs)
     pl.plot_right_cauchy_green_tensor(ld.reshape_C(Cs), titles[i], fnames[i])
-    
+
     # plot potential
     pl.plot_potential_prediction(ys, ys_pred, titles[i], fnames[i])
-    
+
     # plot stress tensor
     pl.plot_stress_tensor_prediction(P, P_pred, titles[i], fnames[i])
 
-# %% 
+# %%
 """
 Model parameters
 
@@ -189,3 +187,4 @@ def print_model_parameters():
         print(layer.get_weights())
         
 #print_model_parameters()
+# %%

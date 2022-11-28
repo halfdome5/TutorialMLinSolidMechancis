@@ -5,7 +5,7 @@ Task 1: Feed-Forward Neural Networks
 ==================
 
 Authors: Jasper Schommartz, Toprak Kis
-         
+       
 11/2022
 """
 
@@ -26,9 +26,11 @@ now = datetime.datetime.now
 # %%
 '''
 factory method
+
 '''
 
-def makeLayer(r_type, **kwargs):
+def make_layer(r_type, **kwargs):
+    """ Calls and returns layer object """
     cf = {
         'Naive': NaiveLayer,
         'PhysicsAugmented': PhysicsAugmentedLayer
@@ -45,6 +47,7 @@ wrapper layers
 '''
     
 class NaiveLayer(layers.Layer):
+    """ Wrapper layer for naive neural network model """
     def __init__(self):
         super().__init__()
         # define non-trainable layers
@@ -60,6 +63,7 @@ class NaiveLayer(layers.Layer):
         return x
     
 class PhysicsAugmentedLayer(layers.Layer):
+    """ Wrapper layer invariante based physics augmented neural network """
     def __init__(self):
         super().__init__()
         # define non-trainable layers
@@ -80,9 +84,8 @@ _x_to_y: custom trainable layers
 
 """
 
-  
-# layer that computes the gradient of a custom layer
 class SobolevLayer(layers.Layer):
+    ''' Layer that computes the gradient '''
     def __init__(self, l):
         super().__init__()
         self.l = l
@@ -92,9 +95,9 @@ class SobolevLayer(layers.Layer):
             g.watch(x)
             y = self.l(x)
         return g.gradient(y, x)
-    
-    
+       
 class FeedForwardLayer(layers.Layer):
+    ''' Layer that implements a feed forward neural network '''
     def __init__(self):
         super().__init__()
         # define hidden layers with activation function
@@ -111,6 +114,7 @@ class FeedForwardLayer(layers.Layer):
         return x
     
 class InputConvexLayer(layers.Layer):
+    """ Layer that implements an input convex neural network """
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
@@ -120,7 +124,7 @@ class InputConvexLayer(layers.Layer):
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
         
-    def call(self, x):    
+    def call(self, x):
         #  create weights by calling on input
         for l in self.ls:
             x = l(x)
@@ -133,6 +137,7 @@ custom non-trainable layers
 '''
 
 class RightCauchyGreenLayer(layers.Layer):
+    ''' Layer that computes the right Cauchy-Green tensor '''
     def __init__(self):
         super().__init__()
         
@@ -141,6 +146,7 @@ class RightCauchyGreenLayer(layers.Layer):
     
 
 class InvariantLayer(layers.Layer):
+    ''' Layer that computes four invariants of a given deformatioin gradient '''
     def __init__(self):
         super().__init__()
         
@@ -166,12 +172,13 @@ class InvariantLayer(layers.Layer):
     
     
 class IndependentValuesLayer(layers.Layer):
+    ''' Layer that extracts six independent values of the right Cauchy green tensor '''
     def __init__(self):
         super().__init__()
         
     def __call__(self, x):
         split1, _, split2, _,split3 = tf.split(x, [3, 1, 2, 2, 1], axis=1)
-        return tf.concat([split1, split2, split3], axis=1)
+        return tf.concat([split1, split2, split3], 1)
     
     
 # %%   
@@ -181,10 +188,11 @@ main: construction of the NN model
 """
 
 def main(loss_weights, **kwargs):
+    """ This creates a Keras model """
     # define input shape
     xs = tf.keras.Input(shape=(3,3))
     # define which (custom) layers the model uses
-    l_nn = makeLayer(**kwargs)
+    l_nn = make_layer(**kwargs)
     ys = l_nn(xs)
     # create and build sobolev layer
     dys = SobolevLayer(l_nn)(xs)

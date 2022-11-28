@@ -15,12 +15,11 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
-# user defined modules
-import data as ld
-
 # %%
 
 def plot_imported_data(F, P, W):
+    ''' Plots imported deformation gradient, Piola-Kirchhoff stress tensor
+    and strain energy density '''
     x = np.arange(W.size) + 1
 
     # deformation gradient
@@ -72,6 +71,7 @@ def plot_imported_data(F, P, W):
 
 
 def plot_invariants(invariants, analytical_invariants):
+    ''' Plots analytically computed and reference invariants '''
     I1 = invariants[0]
     J = invariants[1]
     I4 = invariants[2]
@@ -92,7 +92,7 @@ def plot_invariants(invariants, analytical_invariants):
     plt.plot(x, J_ana, color='navy')
     plt.plot(x, I4_ana, color='darkorange')
     plt.plot(x, I5_ana, color='green')
-    plt.title(u'\u25a0 data, \u2015 analytical')
+    plt.title('\u25a0 data, \u2015 analytical')
     plt.xlabel('load step')
     plt.ylabel(r'$I$')
     plt.xlim(np.min(x), np.max(x))
@@ -102,7 +102,7 @@ def plot_invariants(invariants, analytical_invariants):
     plt.show()
     
 def plot_potential(W, W_ana):
-    
+    ''' Plots analytically computed and reference potential '''
     x = np.arange(W.size) + 1
     # deformation gradient
     fig = plt.figure(dpi=600)
@@ -117,6 +117,7 @@ def plot_potential(W, W_ana):
     plt.show()
     
 def plot_stress_tensor_analytical(P, P_ana):
+    ''' Plots analytically computed stress tensor and reference stress tensor '''
     x = np.arange(np.size(P,axis=0)) + 1
 
     # difference
@@ -161,7 +162,7 @@ def plot_stress_tensor_analytical(P, P_ana):
     plt.plot(x, P_ana[:, 0, 2], color='lightgrey')
     plt.plot(x, P_ana[:, 1, 2], color='lightgrey')
     plt.plot(x, P_ana[:, 2, 2], color='darkorange')
-    plt.title(u'\u25a0 data, \u2015 analytical')
+    plt.title('\u25a0 data, \u2015 analytical')
     plt.xlabel('load step')
     plt.ylabel(r'$P_{ij}$')
     plt.xlim(np.min(x), np.max(x))
@@ -170,7 +171,8 @@ def plot_stress_tensor_analytical(P, P_ana):
     fig.savefig('images/P_analytical.png', dpi=fig.dpi, bbox_inches='tight')
     plt.show()
     
-def plot_stress_tensor_prediction(P, P_pred, title, fname):
+def plot_stress_tensor_prediction(P, P_pred, title, fname=None):
+    ''' Plots predicted stress tensor and reference stress tensor '''
     x = np.arange(np.size(P,axis=0)) + 1
     P = tf.cast(P, dtype='float32')
     P_pred = tf.cast(P_pred, dtype='float32')
@@ -194,7 +196,8 @@ def plot_stress_tensor_prediction(P, P_pred, title, fname):
     leg = plt.legend(handlelength=0.75, loc='center left', bbox_to_anchor=(1, 0.5), ncol=3)
     for line in leg.get_lines():
         line.set_linewidth(4.0)
-    fig.savefig('images/P_pred_diff_{}.png'.format(fname), dpi=fig.dpi, bbox_inches='tight')
+    if fname:
+        fig.savefig(f'images/P_pred_diff_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
     
     fig = plt.figure(dpi=600)
     # imported data
@@ -218,16 +221,17 @@ def plot_stress_tensor_prediction(P, P_pred, title, fname):
     plt.plot(x, P_pred[:, 0, 2], color='lightgrey')
     plt.plot(x, P_pred[:, 1, 2], color='lightgrey')
     plt.plot(x, P_pred[:, 2, 2], color='darkorange')
-    plt.title(u'{}\n\u25a0 data, \u2015 prediction'.format(title))
+    plt.title(f'{title}\n\u25a0 data, \u2015 prediction')
     plt.xlabel('load step')
     plt.ylabel(r'$P_{ij}$')
     plt.xlim(np.min(x), np.max(x))
     plt.grid()
     plt.legend(handlelength=0, loc='center left', bbox_to_anchor=(1, 0.5), ncol=3)
-    fig.savefig('images/P_pred_{}.png'.format(fname), dpi=fig.dpi, bbox_inches='tight')
+    if fname:
+        fig.savefig(f'images/P_pred_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
     plt.show()
     
-def plot_right_cauchy_green_tensor(C, title, fname):
+def plot_right_cauchy_green_tensor(C, title, fname=None):
     '''
     Plots the components of the Cauchy-Green tensor which is provided in Voigt
     notation with six independent compontents.
@@ -250,11 +254,12 @@ def plot_right_cauchy_green_tensor(C, title, fname):
     plt.xlim(np.min(x), np.max(x))
     plt.grid()
     plt.legend(handlelength=0, loc='center left', bbox_to_anchor=(1, 0.5))
-    fig.savefig('images/C_{}.png'.format(fname), dpi=fig.dpi, bbox_inches='tight')
+    if fname:
+        fig.savefig(f'images/C_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
     
 
-def plot_potential_prediction(W, W_pred, title, fname):
-    
+def plot_potential_prediction(W, W_pred, title, fname=None):
+    ''' plots predicted and reference potential '''
     x = np.arange(W.shape[0]) + 1
     # deformation gradient
     fig = plt.figure(dpi=600)
@@ -266,5 +271,6 @@ def plot_potential_prediction(W, W_pred, title, fname):
     plt.xlim(np.min(x), np.max(x))
     plt.grid()
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    fig.savefig('images/W_prediction_{}.png'.format(fname), dpi=fig.dpi, bbox_inches='tight')
+    if fname:
+        fig.savefig(f'images/W_prediction_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
     plt.show()

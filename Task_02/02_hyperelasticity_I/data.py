@@ -34,10 +34,11 @@ def reshape_C(Cs):
     # reshape to voigt notation
     cs_tmp = tf.reshape(Cs, [batch_size, 9])
     # drop dependent values
-    cs = tf.concat([cs_tmp[:,:3], cs_tmp[:,4:6], cs_tmp[:,8:]], axis=1)
+    cs = tf.concat([cs_tmp[:,:3], cs_tmp[:,4:6], cs_tmp[:,8:]], 1)
     return cs
 
 def get_sample_weights(Ps, batch_sizes):
+    ''' Computes rample weights according to loss weighting strategy '''
     norms = tf.norm(Ps, axis=[1,2])
     w = np.zeros(norms.shape)
     for i in range(batch_sizes.shape[0]):
@@ -72,15 +73,15 @@ def load_stress_strain_data(paths):
     for i, path in enumerate(paths):
         F, P, W = read_txt(path)
         
-        batch_sizes[i] = tf.shape(W)[0]
+        batch_sizes[i] = tf.shape(F)[0]
         Fs.append(F)
         Ps.append(P)
         Ws.append(W)
         
     # concatenate and convert to tensorflow tensor
-    Fs = tf.concat(Fs, axis=0)
-    Ps = tf.concat(Ps, axis=0)
-    Ws = tf.concat(Ws, axis=0)
+    Fs = tf.concat(Fs, 0)
+    Ps = tf.concat(Ps, 0)
+    Ws = tf.concat(Ws, 0)
         
     return Fs, Ws, Ps, batch_sizes
 
@@ -97,11 +98,21 @@ def read_txt(path):
     nrows = np.size(arr, axis=0)
 
     F = arr[:, :9].reshape(nrows, 3, 3)
-    P = arr[:, 9:18].reshape(nrows, 3, 3)
-    W = arr[:, 18:]
+    if arr.shape[1] > 9:
+        P = arr[:, 9:18].reshape(nrows, 3, 3)
+        W = arr[:, 18:]
+    else:
+        P = []
+        W = []
     
     return F, P, W
 
+def generate_concentric_paths(fnums):
+    ''' Generates path strings for concentric data '''
+    paths = []
+    for num in fnums:
+        paths.append(f'data/concentric/{num}.txt')
+    return paths
 
 # %%
 '''
@@ -110,9 +121,7 @@ custom non-trainable layer
 '''
 
 class P(layers.Layer):
-    '''
-    computed gradient of potential
-    '''
+    ''' computed gradient of potential '''
     def __init__(self, W):
         super().__init__()
         self.W = W
@@ -126,16 +135,19 @@ class P(layers.Layer):
 
 # additional functions called in layer
 def W(F):
+    ''' Wrapper function for computation of strain energy density '''
     I = compute_invariants(F)
     return compute_potential(I[:,0], I[:,1], I[:,3], I[:,4])
 
 def compute_potential(I1, J, I4, I5):
+    ''' Compute strain energy density from invariants '''
     W = 8 * I1 + 10 * J**2 - 56 * tf.math.log(J) \
         + 0.25 * (I4 ** 2 + I5 ** 2) - 44
     return W
 
 
 def compute_invariants(F):
+    ''' Wrapper function to compute invariants from deformation gradient '''
     C = lm.RightCauchyGreenLayer()(F)
     I = lm.InvariantLayer()(F, C)
     return I
