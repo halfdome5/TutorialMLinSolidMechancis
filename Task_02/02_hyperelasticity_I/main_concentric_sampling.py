@@ -103,7 +103,7 @@ plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.savefig('images/training_loss.png', dpi=fig.dpi, bbox_inches='tight')
 
 fig = plt.figure(dpi=600)
-if t_type == 'Naive':
+if t_type == 'PhysicsAugmented':
     plt.semilogy(test_train_split,mean_test_losses[:,1] + mean_test_losses[:,2], marker='o', label='loss')
     plt.semilogy(test_train_split,mean_test_losses[:,1], marker='o', label='W loss')
     plt.semilogy(test_train_split,mean_test_losses[:,2], marker='o', label='P loss')
