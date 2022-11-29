@@ -17,6 +17,7 @@ Import modules
 import numpy as np
 from matplotlib import pyplot as plt
 import tensorflow as tf
+import pandas as pd
 import datetime
 now = datetime.datetime.now
 
@@ -106,6 +107,16 @@ plt.savefig('images/test_loss.png', dpi=fig.dpi, bbox_inches='tight')
 
 plt.show()
 
+# %%
+"""
+Save results to file
+
+"""
+df_train = pd.DataFrame(mean_train_losses, columns=['total', 'function', 'gradient'])
+df_test = pd.DataFrame(mean_test_losses, columns=['total', 'function', 'gradient'])
+
+df_train.to_csv('out/train_losses.csv', index=False)
+df_test.to_csv('out/test_losses.csv', index=False)
 # %%
 """
 Model parameters
