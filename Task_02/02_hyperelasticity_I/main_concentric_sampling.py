@@ -18,24 +18,26 @@ import numpy as np
 from matplotlib import pyplot as plt
 import tensorflow as tf
 import datetime
-import pandas as pd
 now = datetime.datetime.now
 
 # %% Own modules
 import data as ld
-import models as lm
-import plots as pl
 import training
 
 # %%
-# parameters
+'''
+Training
+
+'''
+
+
 FNUM = 100
 test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
 #test_train_split = np.array([0.1,0.2])
 JMAX = 5
 
-loss_weights = [0, 1]
-epochs = 200
+loss_weights = [0, 1] # only used for physics augmented training
+epochs = 2500
 verbose = 0
 
 # initialization
@@ -47,7 +49,8 @@ for i, split in enumerate(test_train_split):
     train_losses_tmp = np.zeros([JMAX,3])
     test_losses_tmp = np.zeros([JMAX,3])
 
-    for j in range(JMAX):
+    for j in range(JMAX): 
+        print(f'Model {i * JMAX + (j + 1)}/{test_train_split.size * JMAX}')
         # create training and test split
         fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
         ftrain, ftest = tf.split(fnum, [int(split * (FNUM + 1)), -1])
@@ -56,12 +59,11 @@ for i, split in enumerate(test_train_split):
         train_paths = ld.generate_concentric_paths(ftrain)
         test_paths = ld.generate_concentric_paths(ftest)
 
-        # tmodel = training.PhysicsAugmented(loss_weights=loss_weights,
+        # tmodel = training.PhysicsAugmented(paths=train_paths, loss_weights=loss_weights,
         #             epochs=epochs,
         #             verbose=verbose)
-        tmodel = training.Naive(epochs=epochs, verbose=verbose)
+        tmodel = training.Naive(paths=train_paths, epochs=epochs, verbose=verbose)
 
-        tmodel.load(train_paths)
         tmodel.preprocess()
         tmodel.calibrate()
 
@@ -74,8 +76,12 @@ for i, split in enumerate(test_train_split):
 
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate and evaluate all models')
+
 #%%
-# plot
+'''
+Plots
+
+'''
 fig = plt.figure(dpi=600)
 plt.semilogy(test_train_split,mean_train_losses[:,1] + mean_train_losses[:,2], marker='o', label='loss')
 plt.semilogy(test_train_split,mean_train_losses[:,1], marker='o', label='W loss')
@@ -106,6 +112,6 @@ Model parameters
 
 """
 
-#tmodel.print_model_parameters()
+training.print_model_parameters(tmodel.model)
 
 # %%
