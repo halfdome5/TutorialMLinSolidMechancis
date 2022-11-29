@@ -142,7 +142,7 @@ def W(F):
 def compute_potential(I1, J, I4, I5):
     ''' Compute strain energy density from invariants '''
     W = 8 * I1 + 10 * J**2 - 56 * tf.math.log(J) \
-        + 0.25 * (I4 ** 2 + I5 ** 2) - 44
+        + 0.2 * (I4 ** 2 + I5 ** 2) - 44
     return W
 
 

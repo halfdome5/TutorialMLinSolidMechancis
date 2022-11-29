@@ -33,7 +33,7 @@ import plots as pl
 Load model
 
 """
-lw = [1, 1]     # output_1 = function value, output_2 = gradient
+lw = [0, 1]     # output_1 = function value, output_2 = gradient
 model = lm.main(r_type='PhysicsAugmented', loss_weights=lw)
 model.summary()
 
@@ -44,19 +44,19 @@ Load calibration data
 """
 
 # select load cases for calibration
-# paths = [
-#     'data/calibration/biaxial.txt',
-#     'data/calibration/pure_shear.txt',
-#     'data/calibration/uniaxial.txt'
-#     ]
+paths = [
+    'data/calibration/biaxial.txt',
+    'data/calibration/pure_shear.txt',
+    'data/calibration/uniaxial.txt'
+    ]
 
 # paths = [
 #     'data/calibration/biaxial.txt'
 #     ]
 
-paths = [
-    'data/calibration/pure_shear.txt'
-    ]
+# paths = [
+#     'data/calibration/pure_shear.txt'
+#     ]
 
 # paths = [
 #     'data/calibration/uniaxial.txt'
@@ -154,9 +154,9 @@ for i, path in enumerate(paths):
     # shift reference value ys by normalization offset predicted value in
     # the oppositde direction to ensure reasonable
     # results from tensorflow evalutation function
-    # ys_eval = ys + ys_I[0,0]
-    ys_eval = ys
-    # ys_pred = ys_pred - ys_I[0,0]
+    ys_eval = ys + ys_I[0,0]
+    # ys_eval = ys
+    ys_pred = ys_pred - ys_I[0,0]
 
     # Evaluate the model on the test data using `evaluate`
     print(f'\nEvaluate on test data: {titles[i]}')
