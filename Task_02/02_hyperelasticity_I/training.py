@@ -58,7 +58,7 @@ class PhysicsAugmented:
         plt.xlabel('calibration epoch')
         plt.ylabel('log$_{10}$ MSE')
         plt.grid(which='both')
-        plt.legend()
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         fig.savefig('images/loss.png', dpi=fig.dpi, bbox_inches='tight')
 
     def evaluate(self, paths, showplots=False):
@@ -149,7 +149,7 @@ class Naive:
         plt.grid(which='both')
         plt.xlabel('calibration epoch')
         plt.ylabel('log$_{10}$ MSE')
-        plt.legend()
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         fig.savefig('images/loss.png', dpi=fig.dpi, bbox_inches='tight')
 
     def evaluate(self, paths, showplots=False):

@@ -108,11 +108,11 @@ paths = [
     ]
 
 titles = [
-    r'Biaxial calibration',
-    r'Pure shear calibration',
-    r'Uniaxial calibration',
-    r'Biaxial test',
-    r'Mixed test'
+    'Biaxial calibration',
+    'Pure shear calibration',
+    'Uniaxial calibration',
+    'Biaxial test',
+    'Mixed test'
     ]
 
 fnames = [

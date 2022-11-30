@@ -163,10 +163,7 @@ class InvariantLayer(layers.Layer):
         C_inv = tf.linalg.inv(C)
         I3 = tf.linalg.det(C)
         # catch error if a KerasTensor is passed
-        try:
-            Cof_C = tf.constant(np.array([I3i * C_inv[i,:,:] for i, I3i in enumerate(I3)]))
-        except:
-            Cof_C = C_inv
+        Cof_C = I3[:, tf.newaxis, tf.newaxis] * C_inv
         I5 = tf.linalg.trace(Cof_C @ G_ti)
         return tf.stack([I1, J, -J, I4, I5], axis=1)
     
