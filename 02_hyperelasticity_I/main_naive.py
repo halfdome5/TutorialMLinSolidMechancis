@@ -10,95 +10,22 @@ Authors: Jasper Schommartz, Toprak Kis
 """
 
 
-# %%   
+# %% [Import modules]
 """
 Import modules
 
 """
 import numpy as np
-from matplotlib import pyplot as plt
-import tensorflow as tf
 import datetime
+import pandas as pd
 now = datetime.datetime.now
 
 # %% Own modules
-import data as ld
-import models as lm
-import plots as pl
-from metrics import compute_metrics
+import modules.data as ld
+import modules.training as training
 
-# %%   
-"""
-Load model
+# %% Training
 
-"""
-lw = [1, 0]     # output_1 = function value, output_2 = gradient
-model = lm.main(r_type='Naive', loss_weights=lw)
-model.summary()
-
-# %%
-"""
-Load calibration data
-
-"""
-
-# select load cases for calibration
-paths = [
-    'data/calibration/biaxial.txt',
-    'data/calibration/pure_shear.txt',
-    'data/calibration/uniaxial.txt'
-    ]
-
-# xs = F, ys = P
-xs, _, ys, batch_sizes = ld.load_stress_strain_data(paths)
-dys = np.zeros(xs.shape) # placeholder
-
-# %%
-'''
-Preprocessing
-
-'''
-
-# apply load weighting strategy
-sw = ld.get_sample_weights(xs, batch_sizes)
-#sw = np.ones(np.sum(batch_sizes))
-
-
-# %%
-"""
-Model calibration
-
-"""
-
-t1 = now()
-print(t1)
-
-tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
-h = model.fit([xs], [ys, dys],
-              epochs=5000,
-              verbose=2,
-              sample_weight=sw)
-
-t2 = now()
-print('it took', t2 - t1, '(sec) to calibrate the model')
-
-# plot some results
-fig = plt.figure(1, dpi=600)
-plt.semilogy(h.history['loss'], label='training loss')
-plt.grid(which='both')
-plt.xlabel('calibration epoch')
-plt.ylabel('log$_{10}$ MSE')
-plt.legend()
-fig.savefig('images/loss.png', dpi=fig.dpi, bbox_inches='tight')
-
-
-# %%   
-"""
-Evaluation
-
-"""
-
-# selecte load cases for testing
 paths = [
     'data/calibration/biaxial.txt',
     'data/calibration/pure_shear.txt',
@@ -107,56 +34,30 @@ paths = [
     'data/test/mixed_test.txt'
     ]
 
-titles = [
-    'Biaxial calibration',
-    'Pure shear calibration',
-    'Uniaxial calibration',
-    'Biaxial test',
-    'Mixed test'
-    ]
+#Alternative: concentric data
+# fnums = np.array([5, 27, 13, 49])
+# paths = ld.generate_concentric_paths(fnums)
 
-fnames = [
-    'biaxial',
-    'pure_shear',
-    'uniaxial',
-    'biax_test',
-    'mixed_test'
-    ]
+loss_weighting=True
 
+tmodel = training.Naive(paths=paths[:3],
+                        loss_weighting=loss_weighting)
 
+tmodel.calibrate(epochs=2500, verbose=2)
 
-# evaluate each data set separately
-for i, path in enumerate(paths):
-    # reference data
-    xs, _, ys, [batch_size] = ld.load_stress_strain_data([path])
-    
-    # Evaluate the model on the test data using `evaluate`
-    print("\nEvaluate on test data: {}".format(titles[i]))
-    results = model.evaluate(xs, [ys, dys[:batch_size]])
-    
-    # predict using the trained model
-    ys_pred, _ = model.predict(xs)
-    P = ys
-    P_pred = ys_pred
-    
-    # plot right Chauchy-Green tensor
-    Cs = tf.einsum('ikj,ikl->ijl', xs, xs)
-    pl.plot_right_cauchy_green_tensor(ld.reshape_C(Cs), titles[i], fnames[i])
-    
-    # plot stress tensor
-    pl.plot_stress_tensor_prediction(P, P_pred, titles[i], fnames[i])
+# %% Evalutation of normalization criterion
 
-# %%
-"""
-Model parameters
+# in the naive approach ys is already the stress, therefore dys is ignored
+ys_I = tmodel.evaluate_normalization()[0]
+print(f'P(I) =\t{ys_I[0, 0]}\n\t{ys_I[0, 1]}\n\t{ys_I[0, 2]}')
 
-"""
+# %% Loss evalutation
 
-def print_model_parameters():
-    model.summary()
-    for idx, layer in enumerate(model.layers):
-        print(layer.name, layer)
-        #print(layer.weights, "\n")
-        print(layer.get_weights())
-        
-#print_model_parameters()
+# in the naive approach ys is already the stress, therefore dys is ignored
+results = tmodel.evaluate(paths, showplots=True)
+loss = pd.DataFrame(results[:,0], columns=['total'])
+loss['paths'] = paths
+loss
+# %% Model parameters
+
+training.print_model_parameters(tmodel.model)

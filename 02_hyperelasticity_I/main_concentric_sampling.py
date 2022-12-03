@@ -22,8 +22,8 @@ import datetime
 now = datetime.datetime.now
 
 # %% Own modules
-import data as ld
-import training
+import modules.data as ld
+import modules.training as training
 
 # %%
 '''
@@ -34,10 +34,11 @@ Training
 
 FNUM = 100
 #test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
-test_train_split = np.array([0.1,0.2, 0.3])
+test_train_split = np.array([0.7,0.8, 0.9])
 JMAX = 3
-t_type = 'PhysicsAugmented' # 'Naive'
+t_type = 'Naive' # 'Naive'
 
+loss_weighting = True
 loss_weights = [1, 1] # only used for physics augmented training
 epochs = 300
 verbose = 0
@@ -47,8 +48,6 @@ NUMSPLITS = test_train_split.size
 # initialization
 train_losses = np.empty([NUMSPLITS, JMAX], dtype=object)
 test_losses = np.empty([NUMSPLITS, JMAX], dtype=object)
-#train_losses = np.zeros([NUMSPLITS, JMAX, len(train_paths), 3])
-#test_losses = np.zeros([NUMSPLITS, JMAX, len(test_paths), 3])
 
 t1 = now()
 for i, split in enumerate(test_train_split):
@@ -64,17 +63,17 @@ for i, split in enumerate(test_train_split):
         print(f'Model {i * JMAX + (j + 1)}/{NUMSPLITS * JMAX}')
 
         if t_type == 'PhysicsAugmented':
-            tmodel = training.PhysicsAugmented(paths=train_paths, loss_weights=loss_weights,
-                        epochs=epochs,
-                        verbose=verbose)
+            tmodel = training.PhysicsAugmented(paths=train_paths, loss_weights=loss_weights, loss_weighting=True)
         else:
-            tmodel = training.Naive(paths=train_paths, epochs=epochs, verbose=verbose)
+            tmodel = training.Naive(paths=train_paths, loss_weighting=loss_weighting)
 
-        tmodel.preprocess()
-        tmodel.calibrate()
+        tmodel.calibrate(epochs=epochs, verbose=verbose)
 
         train_losses[i, j] = tmodel.evaluate(train_paths)
         test_losses[i, j] = tmodel.evaluate(test_paths)
+
+        #print(f'\nW(I) =\t{ys[0,0]}')
+        #print(f'P(I) =\t{dys[0,0]}\n\t{dys[0,1]}\n\t{dys_I[0,2]}')
 
         # Depending on the type of training the total loss might only contain the value
         # of either training on the gradient or the functional value, e.g. if loss_weights
@@ -190,6 +189,7 @@ df_test = df_train[['split', 'total', 'function', 'gradient']]
 
 df_train.to_csv('out/train_losses.csv', index=False)
 df_test.to_csv('out/test_losses.csv', index=False)
+
 # %%
 """
 Model parameters

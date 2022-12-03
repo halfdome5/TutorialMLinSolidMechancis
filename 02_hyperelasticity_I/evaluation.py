@@ -14,14 +14,14 @@ import modules
 import numpy as np
 
 # user defined modules
-import data as ld
-from plots import plot_imported_data, plot_invariants, plot_potential
-from plots import plot_stress_tensor_analytical
-from metrics import compute_metrics
+import modules.data as ld
+from modules.plots import plot_imported_data, plot_invariants, plot_potential
+from modules.plots import plot_stress_tensor_analytical
+from modules.metrics import compute_metrics
 
 # %%
 '''
-evaluate imported F, P and W data
+Evaluate imported F, P and W data
 
 '''
 
@@ -31,7 +31,7 @@ F, P, W = ld.read_txt('data/test/mixed_test.txt')
 plot_imported_data(F, P, W)
 
 '''
-evaluate invariants
+Evaluate analytical invariants
 
 '''
 
@@ -62,7 +62,7 @@ print('''I5:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 
 # %%
 '''
-evaluate strain energy density
+Evaluate analytical strain energy density
 
 '''
 
@@ -76,7 +76,7 @@ print('''W:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 
 # %%
 '''
-evaluta Piola-Kirchhoff stress tensor
+Evaluate analytical Piola-Kirchhoff stress tensor
 
 '''
 
@@ -101,6 +101,6 @@ mse, mae = compute_metrics(P[:, 2, 0].T, P_analytical[:, 2, 0])
 print('''P_31:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 mse, mae = compute_metrics(P[:, 2, 1].T, P_analytical[:, 2, 1])
 print('''P_32:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
-mse, mae = compute_metrics(P[:, 2, 2].T, P_analytical[:, 2, 0])
+mse, mae = compute_metrics(P[:, 2, 2].T, P_analytical[:, 2, 2])
 print('''P_33:\tMSE = {}, MAE = {}\n'''.format(mse, mae))
 
