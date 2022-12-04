@@ -307,3 +307,53 @@ def plot_calibration_loss(h):
     plt.grid(which='both')
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     fig.savefig('images/loss.png', dpi=fig.dpi, bbox_inches='tight')
+
+def plot_loss_over_train_split_physics_augmented(df, title, fname):
+    ''' Plots the mean, median, maximum and minimum loss over the test training split
+    for physics augmented training '''
+    # settings
+    alpha = 0.3
+
+    NUMSPLITS = int(df.split.size / 4)
+    fig = plt.figure(dpi=600)
+    plt.semilogy(df.split[:NUMSPLITS],df.total[:NUMSPLITS], color='firebrick', marker='o', label='mean')
+    plt.semilogy(df.split[:NUMSPLITS],df.total[NUMSPLITS:2 * NUMSPLITS], color='firebrick', marker='s', label='median')
+    plt.fill_between(df.split[:NUMSPLITS], df.total[2 * NUMSPLITS: 3 * NUMSPLITS], df.total[3 * NUMSPLITS:], color='firebrick', alpha=alpha)
+    
+    plt.semilogy(df.split[:NUMSPLITS],df.function[:NUMSPLITS], color='navy', marker='o', label='W mean')
+    plt.semilogy(df.split[:NUMSPLITS],df.function[NUMSPLITS:2 * NUMSPLITS], color='navy', marker='s', label='W median')
+    plt.fill_between(df.split[:NUMSPLITS], df.function[2 * NUMSPLITS: 3 * NUMSPLITS], df.function[3 * NUMSPLITS:], color='navy', alpha=alpha)
+
+    plt.semilogy(df.split[:NUMSPLITS],df.gradient[:NUMSPLITS], color='darkorange', marker='o', label='P mean')
+    plt.semilogy(df.split[:NUMSPLITS],df.gradient[NUMSPLITS:2 * NUMSPLITS], color='darkorange', marker='s', label='P median')
+    plt.fill_between(df.split[:NUMSPLITS], df.gradient[2 * NUMSPLITS: 3 * NUMSPLITS], df.gradient[3 * NUMSPLITS:], color='darkorange', alpha=alpha)
+
+    plt.title(title)
+    plt.xlabel('training fraction')
+    plt.ylabel('loss')
+    plt.xlim(np.min(df.split[:NUMSPLITS]), np.max(df.split[:NUMSPLITS]))
+    plt.grid(True, which='both')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.savefig(f'images/{fname}.png', dpi=fig.dpi, bbox_inches='tight')
+
+plt.show()
+
+def plot_loss_over_train_split_naive(df, title, fname):
+    ''' Plots the mean, median, maximum and minimum loss over the test training split
+    for naive model training '''
+    # settings
+    alpha = 0.3
+
+    NUMSPLITS = int(df.split.size / 4)
+    fig = plt.figure(dpi=600)
+    plt.semilogy(df.split[:NUMSPLITS],df.total[:NUMSPLITS], color='firebrick', marker='o', label='mean')
+    plt.semilogy(df.split[:NUMSPLITS],df.total[NUMSPLITS:2 * NUMSPLITS], color='firebrick', marker='s', label='median')
+    plt.fill_between(df.split[:NUMSPLITS], df.total[2 * NUMSPLITS: 3 * NUMSPLITS], df.total[3 * NUMSPLITS:], color='firebrick', alpha=alpha)
+    
+    plt.title(title)
+    plt.xlabel('training fraction')
+    plt.ylabel('loss')
+    plt.xlim(np.min(df.split[:NUMSPLITS]), np.max(df.split[:NUMSPLITS]))
+    plt.grid(True, which='both')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.savefig(f'images/{fname}.png', dpi=fig.dpi, bbox_inches='tight')

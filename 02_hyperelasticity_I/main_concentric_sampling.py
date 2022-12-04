@@ -20,28 +20,38 @@ import tensorflow as tf
 import pandas as pd
 import datetime
 now = datetime.datetime.now
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+print(tf.keras.backend.floatx())
+tf.keras.backend.set_floatx('float64')
 
 # %% Own modules
 import modules.data as ld
 import modules.training as training
+import modules.plots as pl
 
 # %%
 '''
-Training
+Parameter definition
 
 '''
-
+#
 
 FNUM = 100
-test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
-#test_train_split = np.array([0.1])
-JMAX = 5
+#test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
+test_train_split = np.array([0.1, 0.2])
+JMAX = 3
 t_type = 'PhysicsAugmented' # 'Naive'
 
 loss_weighting = True
 loss_weights = [1, 1] # only used for physics augmented training
 epochs = 5000
 verbose = 0
+
+#%%
+'''
+Training
+
+'''
 
 NUMSPLITS = test_train_split.size
 
@@ -82,6 +92,8 @@ for i, split in enumerate(test_train_split):
         train_losses[i, j][:,0] = np.sum(train_losses[i,j][:,1:3], axis=1)
         test_losses[i, j][:,0] = np.sum(test_losses[i,j][:,1:3], axis=1)
 
+#%%
+# concat all splits because we cant to compoute the average loss of all runs
 tmp = np.array([np.concatenate(train_losses[i,:]) for i in range(NUMSPLITS)])
 mean_train_losses = np.array([np.mean(tmp[i], axis=0) for i in range(NUMSPLITS)])
 median_train_losses = np.array([np.median(tmp[i], axis=0) for i in range(NUMSPLITS)])
@@ -97,98 +109,56 @@ min_test_losses = np.array([np.min(tmp[i], axis=0) for i in range(NUMSPLITS)])
 t2 = now()
 print('it took', t2 - t1, '(sec) to calibrate and evaluate all models')
 
-#%%
-'''
-Plots
-
-'''
-
-alpha = 0.3
-
-# training
-fig = plt.figure(dpi=600)
-if t_type == 'PhysicsAugmented':
-    plt.semilogy(test_train_split,mean_train_losses[:,0], color='firebrick', marker='o', label='mean')
-    plt.semilogy(test_train_split,median_train_losses[:,0], color='firebrick', marker='s', label='median')
-    plt.fill_between(test_train_split, max_train_losses[:,0], min_train_losses[:,0], color='firebrick', alpha=alpha)
-    
-    plt.semilogy(test_train_split,mean_train_losses[:,1], color='navy', marker='o', label='W mean')
-    plt.semilogy(test_train_split,median_train_losses[:,1], color='navy', marker='s', label='W median')
-    plt.fill_between(test_train_split, max_train_losses[:,1], min_train_losses[:,1], color='navy', alpha=alpha)
-
-    plt.semilogy(test_train_split,mean_train_losses[:,2], color='darkorange', marker='o', label='P mean')
-    plt.semilogy(test_train_split,median_train_losses[:,2], color='darkorange', marker='s', label='P median')
-    plt.fill_between(test_train_split, max_train_losses[:,2], min_train_losses[:,2], color='darkorange', alpha=alpha)
-
-else:
-    plt.semilogy(test_train_split, mean_train_losses[:,0], color='firebrick', marker='o', label='mean')
-    plt.semilogy(test_train_split, median_train_losses[:,0], color='firebrick', marker='s', label='median')
-    plt.fill_between(test_train_split, max_train_losses[:,0], min_train_losses[:,0], color='firebrick', alpha=alpha)
-plt.title('Evaluation on training data')
-plt.xlabel('training fraction')
-plt.ylabel('loss')
-plt.xlim(np.min(test_train_split), np.max(test_train_split))
-plt.grid(True, which='both')
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.savefig('images/training_loss.png', dpi=fig.dpi, bbox_inches='tight')
-
-
-# test
-fig = plt.figure(dpi=600)
-if t_type == 'PhysicsAugmented':
-    plt.semilogy(test_train_split,mean_test_losses[:,0], color='firebrick', marker='o', label='mean')
-    plt.semilogy(test_train_split,median_test_losses[:,0], color='firebrick', marker='s', label='median')
-    plt.fill_between(test_train_split, max_test_losses[:,0], min_test_losses[:,0], color='firebrick', alpha=alpha)
-    
-    plt.semilogy(test_train_split,mean_test_losses[:,1], color='navy', marker='o', label='W mean')
-    plt.semilogy(test_train_split,median_test_losses[:,1], color='navy', marker='s', label='W median')
-    plt.fill_between(test_train_split, max_test_losses[:,1], min_test_losses[:,1], color='navy', alpha=alpha)
-
-    plt.semilogy(test_train_split,mean_test_losses[:,2], color='darkorange', marker='o', label='P mean')
-    plt.semilogy(test_train_split,median_test_losses[:,2], color='darkorange', marker='s', label='P median')
-    plt.fill_between(test_train_split, max_test_losses[:,2], min_test_losses[:,2], color='darkorange', alpha=alpha)
-
-else:
-    plt.semilogy(test_train_split, mean_test_losses[:,0], color='firebrick', marker='o', label='mean')
-    plt.semilogy(test_train_split, median_test_losses[:,0], color='firebrick', marker='s', label='median')
-    plt.fill_between(test_train_split, max_test_losses[:,0], min_test_losses[:,0], color='firebrick', alpha=alpha)
-
-plt.title('Evaluation on training data')
-plt.xlabel('training fraction')
-plt.ylabel('loss')
-plt.xlim(np.min(test_train_split), np.max(test_train_split))
-plt.grid(True, which='both')
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.savefig('images/training_loss.png', dpi=fig.dpi, bbox_inches='tight')
-plt.savefig('images/test_loss.png', dpi=fig.dpi, bbox_inches='tight')
-
-plt.show()
 
 # %%
 """
 Save results to file
 
 """
-df_train = pd.concat([pd.DataFrame(mean_train_losses),
-                    pd.DataFrame(median_train_losses),
-                    pd.DataFrame(min_train_losses),
-                    pd.DataFrame(max_train_losses)],
-                    keys=('mean', 'median', 'min', 'max'))
-df_train.columns = ['total', 'function', 'gradient']
-df_train['split'] = np.tile(test_train_split, 4)
-df_train = df_train[['split', 'total', 'function', 'gradient']]
 
-df_test = pd.concat([pd.DataFrame(mean_test_losses),
-                    pd.DataFrame(median_test_losses),
-                    pd.DataFrame(min_test_losses),
-                    pd.DataFrame(max_test_losses)],
+def save_to_df(means, medians, mins, maxs):
+    df = pd.concat([pd.DataFrame(means),
+                    pd.DataFrame(medians),
+                    pd.DataFrame(mins),
+                    pd.DataFrame(maxs)],
                     keys=('mean', 'median', 'min', 'max'))
-df_test.columns = ['total', 'function', 'gradient']
-df_test['split'] = np.tile(test_train_split, 4)
-df_test = df_train[['split', 'total', 'function', 'gradient']]
+    df.columns = ['total', 'function', 'gradient']
+    df['split'] = np.tile(test_train_split, 4)
+    df = df[['split', 'total', 'function', 'gradient']]
+    return df
+
+df_train = save_to_df(mean_train_losses,
+                        median_train_losses,
+                        min_train_losses,
+                        max_train_losses)
+
+df_test = save_to_df(mean_test_losses,
+                        median_test_losses,
+                        min_test_losses,
+                        max_test_losses)
 
 df_train.to_csv('out/train_losses.csv', index=False)
 df_test.to_csv('out/test_losses.csv', index=False)
+
+# %%
+'''
+Plot losses from csv file
+
+'''
+
+df_train = pd.read_csv('out/train_losses.csv')
+df_test = pd.read_csv('out/test_losses.csv')
+
+if t_type  == 'PhysicsAugmented':
+    title = 'Evaluation on training data'
+    pl.plot_loss_over_train_split_physics_augmented(df_train, title=title, fname='train_loss')
+    title = 'Evaluation on test data'
+    pl.plot_loss_over_train_split_physics_augmented(df_test, title=title, fname='test_loss')
+elif t_type == 'Naive':
+    title = 'Evaluation on training data'
+    pl.plot_loss_over_train_split_naive(df_train, title=title, fname='train_loss')
+    title = 'Evaluation on test data'
+    pl.plot_loss_over_train_split_naive(df_test, title=title, fname='test_loss')
 
 # %%
 """

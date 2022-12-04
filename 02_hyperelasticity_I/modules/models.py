@@ -150,11 +150,12 @@ class InvariantLayer(layers.Layer):
     def __init__(self):
         super().__init__()
 
+    @tf.autograph.experimental.do_not_convert
     def __call__(self, F, C):
         # transversely isotropic structural tensor
         G_ti = np.array([[4, 0, 0],
-                      [0, 0.5, 0],
-                      [0, 0, 0.5]])
+                            [0, 0.5, 0],
+                            [0, 0, 0.5]])
         # compute invariants
         I1 = tf.linalg.trace(C)
         J = tf.linalg.det(F)
@@ -187,7 +188,7 @@ main: construction of the NN model
 def main(loss_weights, **kwargs):
     """ This creates a Keras model """
     # define input shape
-    xs = tf.keras.Input(shape=(3,3))
+    xs = tf.keras.Input(shape=(3,3), dtype='float32')
     # define which (custom) layers the model uses
     l_nn = make_layer(**kwargs)
     ys = l_nn(xs)
