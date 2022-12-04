@@ -35,8 +35,8 @@ paths = [
     ]
 
 #Alternative: concentric data
-fnums = np.array([5, 27, 13, 49])
-paths = ld.generate_concentric_paths(fnums)
+# fnums = np.array([5, 27, 13, 49])
+# paths = ld.generate_concentric_paths(fnums)
 
 lw = [1, 1]
 loss_weighting=True

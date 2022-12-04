@@ -35,32 +35,29 @@ paths = [
     ]
 
 #Alternative: concentric data
-fnums = np.array([5, 27, 13, 49])
-paths = ld.generate_concentric_paths(fnums)
+# fnums = np.array([5, 27, 13, 49])
+# paths = ld.generate_concentric_paths(fnums)
 
-lw = [1, 1]
 loss_weighting=True
 
-tmodel = training.PhysicsAugmented(paths=paths[:3],
-                                loss_weights=lw,
-                                loss_weighting=loss_weighting)
+tmodel = training.Naive(paths=paths[:3],
+                        loss_weighting=loss_weighting)
 
 tmodel.calibrate(epochs=2500, verbose=2)
 
 # %% Evalutation of normalization criterion
 
-ys_I, dys_I = tmodel.evaluate_normalization()
-print(f'\nW(I) =\t{ys_I[0,0]}')
-print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
+# in the naive approach ys is already the stress, therefore dys is ignored
+ys_I = tmodel.evaluate_normalization()[0]
+print(f'P(I) =\t{ys_I[0, 0]}\n\t{ys_I[0, 1]}\n\t{ys_I[0, 2]}')
 
 # %% Loss evalutation
 
+# in the naive approach ys is already the stress, therefore dys is ignored
 results = tmodel.evaluate(paths, showplots=True)
-loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
-loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
+loss = pd.DataFrame(results[:,0], columns=['total'])
 loss['paths'] = paths
 loss
-
 # %% Model parameters
 
 training.print_model_parameters(tmodel.model)

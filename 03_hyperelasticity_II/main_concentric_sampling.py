@@ -33,14 +33,14 @@ Training
 
 
 FNUM = 100
-test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
-#test_train_split = np.array([0.1])
-JMAX = 5
-t_type = 'PhysicsAugmented' # 'Naive'
+#test_train_split = np.array([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95,0.99])
+test_train_split = np.array([0.7,0.8, 0.9])
+JMAX = 3
+t_type = 'Naive' # 'Naive'
 
 loss_weighting = True
 loss_weights = [1, 1] # only used for physics augmented training
-epochs = 5000
+epochs = 300
 verbose = 0
 
 NUMSPLITS = test_train_split.size
