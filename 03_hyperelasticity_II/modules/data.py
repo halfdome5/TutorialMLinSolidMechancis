@@ -100,7 +100,7 @@ def read_txt(path):
     F = arr[:, :9].reshape(nrows, 3, 3)
     if arr.shape[1] > 9:
         P = arr[:, 9:18].reshape(nrows, 3, 3)
-        W = arr[:, 18:]
+        W = arr[:, 18:19]
     else:
         P = []
         W = []

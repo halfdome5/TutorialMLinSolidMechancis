@@ -150,11 +150,12 @@ class InvariantLayer(layers.Layer):
     def __init__(self):
         super().__init__()
 
+    @tf.autograph.experimental.do_not_convert
     def __call__(self, F, C):
         # transversely isotropic structural tensor
         G_ti = np.array([[4, 0, 0],
-                      [0, 0.5, 0],
-                      [0, 0, 0.5]])
+                            [0, 0.5, 0],
+                            [0, 0, 0.5]])
         # compute invariants
         I1 = tf.linalg.trace(C)
         J = tf.linalg.det(F)

@@ -188,7 +188,7 @@ main: construction of the NN model
 def main(loss_weights, **kwargs):
     """ This creates a Keras model """
     # define input shape
-    xs = tf.keras.Input(shape=(3,3), dtype='float32')
+    xs = tf.keras.Input(shape=(3,3))
     # define which (custom) layers the model uses
     l_nn = make_layer(**kwargs)
     ys = l_nn(xs)
