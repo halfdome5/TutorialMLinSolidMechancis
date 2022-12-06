@@ -15,10 +15,12 @@ Authors: Jasper Schommartz, Toprak Kis
 Import modules
 
 """
+import tensorflow as tf
 import numpy as np
 import datetime
 import pandas as pd
 now = datetime.datetime.now
+tf.keras.backend.set_floatx('float64')
 
 # %% Own modules
 import modules.data as ld
@@ -43,7 +45,7 @@ loss_weighting=True
 tmodel = training.Naive(paths=paths[:3],
                         loss_weighting=loss_weighting)
 
-tmodel.calibrate(epochs=2500, verbose=2)
+tmodel.calibrate(epochs=5000, verbose=2)
 
 # %% Evalutation of normalization criterion
 

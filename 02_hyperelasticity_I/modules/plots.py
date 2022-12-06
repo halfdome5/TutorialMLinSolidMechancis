@@ -322,11 +322,11 @@ def plot_loss_over_train_split_physics_augmented(df, title, fname):
     
     plt.semilogy(df.split[:NUMSPLITS],df.function[:NUMSPLITS], color='navy', marker='o', label='W mean')
     plt.semilogy(df.split[:NUMSPLITS],df.function[NUMSPLITS:2 * NUMSPLITS], color='navy', marker='s', label='W median')
-    plt.fill_between(df.split[:NUMSPLITS], df.function[2 * NUMSPLITS: 3 * NUMSPLITS], df.function[3 * NUMSPLITS:], color='navy', alpha=alpha)
+    #plt.fill_between(df.split[:NUMSPLITS], df.function[2 * NUMSPLITS: 3 * NUMSPLITS], df.function[3 * NUMSPLITS:], color='navy', alpha=alpha)
 
     plt.semilogy(df.split[:NUMSPLITS],df.gradient[:NUMSPLITS], color='darkorange', marker='o', label='P mean')
     plt.semilogy(df.split[:NUMSPLITS],df.gradient[NUMSPLITS:2 * NUMSPLITS], color='darkorange', marker='s', label='P median')
-    plt.fill_between(df.split[:NUMSPLITS], df.gradient[2 * NUMSPLITS: 3 * NUMSPLITS], df.gradient[3 * NUMSPLITS:], color='darkorange', alpha=alpha)
+    #plt.fill_between(df.split[:NUMSPLITS], df.gradient[2 * NUMSPLITS: 3 * NUMSPLITS], df.gradient[3 * NUMSPLITS:], color='darkorange', alpha=alpha)
 
     plt.title(title)
     plt.xlabel('training fraction')

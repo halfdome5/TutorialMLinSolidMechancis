@@ -15,10 +15,12 @@ Authors: Jasper Schommartz, Toprak Kis
 Import modules
 
 """
+import tensorflow as tf
 import numpy as np
 import datetime
 import pandas as pd
 now = datetime.datetime.now
+tf.keras.backend.set_floatx('float64')
 
 # %% Own modules
 import modules.data as ld
@@ -35,17 +37,17 @@ paths = [
     ]
 
 #Alternative: concentric data
-fnums = np.array([5, 27, 13, 49])
-paths = ld.generate_concentric_paths(fnums)
+#fnums = np.array([5, 27, 13, 49])
+#paths = ld.generate_concentric_paths(fnums)
 
-lw = [1, 1]
+lw = [0, 1]
 loss_weighting=True
 
 tmodel = training.PhysicsAugmented(paths=paths[:3],
                                 loss_weights=lw,
                                 loss_weighting=loss_weighting)
 
-tmodel.calibrate(epochs=2500, verbose=2)
+tmodel.calibrate(epochs=5000, verbose=2)
 
 # %% Evalutation of normalization criterion
 

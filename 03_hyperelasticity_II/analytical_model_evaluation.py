@@ -12,7 +12,6 @@ import modules
 
 '''
 import numpy as np
-import os
 
 # user defined modules
 import modules.data as ld
@@ -27,7 +26,7 @@ Evaluate imported F, P and W data
 '''
 
 # load deformation, stress and energy data
-F, P, W = ld.read_txt('data/calibration/uniaxial.txt')
+F, P, W = ld.read_txt('data/test/mixed_test.txt')
 
 plot_imported_data(F, P, W)
 
@@ -37,7 +36,7 @@ Evaluate analytical invariants
 '''
 
 # load invariants from data
-arr = np.loadtxt('data/invariants/I_uniaxial.txt')
+arr = np.loadtxt('data/invariants/I_mixed_test.txt')
 
 I1 = arr[:, :1]
 J = arr[:, 1:2]

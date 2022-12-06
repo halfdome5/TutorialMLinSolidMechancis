@@ -24,8 +24,7 @@ Evaluate imported F, P and W data
 '''
 
 # load deformation, stress and energy data
-dir_path = os.path.join('data', 'soft_beam_lattice_metamaterials', 'data')
-path = os.path.join(dir_path, 'BCC_volumetric.txt')
+path = 'data/soft_beam_lattice_metamaterials/data/BCC_volumetric.txt'
 F, P, W = ld.read_txt(path)
 
 plot_imported_data(F, P, W)
