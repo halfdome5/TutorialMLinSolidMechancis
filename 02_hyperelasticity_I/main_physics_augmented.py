@@ -37,13 +37,14 @@ paths = [
     ]
 
 #Alternative: concentric data
-#fnums = np.array([5, 27, 13, 49])
-#paths = ld.generate_concentric_paths(fnums)
+FNUM = 100
+fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
+paths = ld.generate_concentric_paths(fnum)
 
 lw = [1, 1]
 loss_weighting=True
 
-tmodel = training.PhysicsAugmented(paths=paths[:3],
+tmodel = training.PhysicsAugmented(paths=paths[:10],
                                 loss_weights=lw,
                                 loss_weighting=loss_weighting)
 
@@ -57,10 +58,10 @@ print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
 
 # %% Loss evalutation
 
-results = tmodel.evaluate(paths, showplots=True)
+results = tmodel.evaluate(paths[10:], showplots=False)
 loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
 loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
-loss['paths'] = paths
+loss['paths'] = paths[10:]
 loss
 
 # %% Model parameters

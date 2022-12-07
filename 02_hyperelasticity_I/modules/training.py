@@ -99,7 +99,7 @@ class PhysicsAugmented:
 
     def __evaluate_single_load_path(self, path, showplots=False):
         ''' Perform evaluation of a single load path '''
-        xs, ys, dys, _ = self.__load([path])
+        xs, ys, dys, batch_size = self.__load([path])
 
         # predict using the trained model
         ys_pred, dys_pred = self.model.predict(xs)
@@ -116,7 +116,14 @@ class PhysicsAugmented:
             # no normalization
             ys_eval = ys
 
-        loss = self.model.evaluate(xs, [ys_eval, dys], verbose=0)
+        if self.loss_weighting:
+            sample_weights = ld.get_sample_weights(xs, batch_size)
+        else:
+            sample_weights = np.ones(np.sum(batch_size))
+
+        loss = self.model.evaluate(xs, [ys_eval, dys], 
+                                    verbose=0,
+                                    sample_weight=sample_weights)
 
         if showplots:
             # reshape right Cauchy-Green-Tensor
@@ -193,11 +200,18 @@ class Naive:
         return losses
 
     def __evaluate_single_load_path(self, path, showplots=False):
-        xs, ys, dys, _ = self.__load([path])
+        xs, ys, dys, batch_size = self.__load([path])
 
         # predict using the trained model
         ys_pred, _ = self.model.predict(xs)
-        loss = self.model.evaluate(xs, [ys, dys], verbose=0)
+        if self.loss_weighting:
+            sample_weights = ld.get_sample_weights(xs, batch_size)
+        else:
+            sample_weights = np.ones(np.sum(batch_size))
+        
+        loss = self.model.evaluate(xs, [ys, dys], 
+                                verbose=0,
+                                sample_weight=sample_weights)
 
         if showplots:
             # plot right Chauchy-Green tensor
