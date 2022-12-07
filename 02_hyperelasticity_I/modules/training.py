@@ -110,8 +110,8 @@ class PhysicsAugmented:
         if self.loss_weights == [0, 1]:
             ys_I, _ = self.evaluate_normalization()
             # normalization
-            ys_eval = ys + ys_I
-            ys_pred = ys_pred - ys_I
+            ys_eval = ys + ys_I[0,0]
+            ys_pred = ys_pred - ys_I[0,0]
         else:
             # no normalization
             ys_eval = ys

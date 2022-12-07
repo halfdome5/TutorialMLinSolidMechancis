@@ -40,7 +40,7 @@ paths = [
 #fnums = np.array([5, 27, 13, 49])
 #paths = ld.generate_concentric_paths(fnums)
 
-lw = [0, 1]
+lw = [1, 1]
 loss_weighting=True
 
 tmodel = training.PhysicsAugmented(paths=paths[:3],

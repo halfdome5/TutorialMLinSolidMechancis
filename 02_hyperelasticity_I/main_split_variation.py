@@ -42,9 +42,9 @@ test_train_split = np.array([0.7, 0.8, 0.9])
 test_train_split = np.array([0.8])
 #test_train_split = np.array([0.1, 0.2])
 JMAX = 5
-t_type = 'Naive' # 'Naive'
+t_type = 'PhysicsAugmented' # 'Naive'
 
-loss_weighting = False
+loss_weighting = True
 loss_weights = [1, 1] # only used for physics augmented training
 epochs = 5000
 verbose = 0
