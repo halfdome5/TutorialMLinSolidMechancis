@@ -42,11 +42,10 @@ FNUM = 100
 # paths = ld.generate_concentric_paths(fnum)
 
 lw = [1, 1]
-loss_weighting=True
 
 tmodel = training.TransverseIsotropy(paths=paths[:1],
                                 loss_weights=lw,
-                                loss_weighting=loss_weighting)
+                                loss_weighting=True)
 
 tmodel.calibrate(epochs=5000, verbose=2)
 

@@ -72,7 +72,7 @@ class TransverseIsotropy(layers.Layer):
         self.lC = RightCauchyGreenTensor()
         self.lI = TransIsoInvariants()
         # define neural network
-        self.lNN = InputConvex()
+        self.lNN = InputConvexNonNeg()
 
     def __call__(self, x):
         y = self.lC(x)
@@ -89,13 +89,26 @@ class CubicAnisotropy(layers.Layer):
         self.lC = RightCauchyGreenTensor()
         self.lI = CubicAnisoInvariants()
         # define neural network
-        self.lNN = InputConvex()
+        self.lNN = InputConvexNonNeg()
 
     def __call__(self, x):
         y = self.lC(x)
         y = self.lI(x, y)
         y = self.lNN(y)
         return y
+
+class DeformationGradientBasedNN(layers.Layer):
+    '''  Wrapper layer for deformation gradient based, polyconvex physics augmented neural networks'''
+    def __init__(self):
+        # define non-trainable layers
+        self.ls = [PolyconvexArguments()]
+        # define neutral network
+        self.ls += [InputConvex()]
+
+    def __call__(self, x):
+        for l in self.ls:
+            x = l(x)
+        return x
 
 # %%   
 """
@@ -133,7 +146,25 @@ class FeedForward(layers.Layer):
         return x
 
 class InputConvex(layers.Layer):
-    """ Layer that implements an input convex neural network """
+    ''' Layer that implements an input convex neural network  '''
+    def __init__(self):
+        super().__init__()
+        # define hidden layers with activation functions
+        self.ls = [layers.Dense(8, 'softplus')]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        # scalar-valued output function
+        self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
+
+    def call(self, x):
+        #  create weights by calling on input
+        for l in self.ls:
+            x = l(x)
+        return x
+
+class InputConvexNonNeg(layers.Layer):
+    ''' Layer that implements an input convex neural network
+    with non-negative weights in the first hidden layer  '''
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
@@ -162,6 +193,19 @@ class RightCauchyGreenTensor(layers.Layer):
  
     def __call__(self, F):
         return tf.einsum('ikj,ikl->ijl', F, F)
+
+
+class PolyconvexArguments(layers.Layer):
+    ''' Layer that computes die arguments F, cofactor F and det(F) for the poly-
+    convex potential function '''
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, F):
+        F_inv = tf.linalg.inv(F)
+        Cof_F = tf.linalg.det(F)[:, tf.newaxis, tf.newaxis] * F_inv
+        detF = tf.linalg.det(F)
+        return tf.stack([F_inv, Cof_F, detF], axis = 1) #TODO make sure that these values are actually stackable
 
 
 class TransIsoInvariants(layers.Layer):

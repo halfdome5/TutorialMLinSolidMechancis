@@ -29,24 +29,21 @@ import modules.training as training
 # %% Training
 
 paths = [
-    'data/calibration/biaxial.txt',
-    'data/calibration/pure_shear.txt',
-    'data/calibration/uniaxial.txt',
-    'data/test/biax_test.txt',
-    'data/test/mixed_test.txt'
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_uniaxial.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_biaxial.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_shear.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_volumetric.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_planar.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_test1.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_test2.txt',
+    'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_test3.txt'
     ]
 
-#Alternative: concentric data
-FNUM = 100
-# fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
-# paths = ld.generate_concentric_paths(fnum)
-
 lw = [1, 1]
-loss_weighting=True
 
-tmodel = training.TransverseIsotropy(paths=paths[:1],
+tmodel = training.CubicAnisotropy(paths=paths[:4],
                                 loss_weights=lw,
-                                loss_weighting=loss_weighting)
+                                loss_weighting=True)
 
 tmodel.calibrate(epochs=5000, verbose=2)
 
@@ -58,10 +55,10 @@ print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
 
 # %% Loss evalutation
 
-results = tmodel.evaluate(paths[:1], showplots=False)
+results = tmodel.evaluate(paths[:], showplots=True)
 loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
 loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
-loss['paths'] = paths[:1]
+loss['paths'] = paths[:]
 loss
 
 # %% Model parameters
