@@ -29,11 +29,11 @@ import modules.training as training
 # %% Training
 
 paths = [
-    'data/calibration/biaxial.txt',
-    'data/calibration/pure_shear.txt',
-    'data/calibration/uniaxial.txt',
-    'data/test/biax_test.txt',
-    'data/test/mixed_test.txt'
+    'data/02_hyperelasticity_I/calibration/biaxial.txt',
+    'data/02_hyperelasticity_I/calibration/pure_shear.txt',
+    'data/02_hyperelasticity_I/calibration/uniaxial.txt',
+    'data/02_hyperelasticity_I/test/biax_test.txt',
+    'data/02_hyperelasticity_I/test/mixed_test.txt'
     ]
 
 #Alternative: concentric data

@@ -25,17 +25,17 @@ pre-processing
 
 '''
 
-def reshape(x):
-    batch_size = x.shape[0]
-    return tf.reshape(x, [batch_size, 9])
+# def reshape(x):
+#     batch_size = x.shape[0]
+#     return tf.reshape(x, [batch_size, 9])
 
-def reshape_C(Cs):
-    batch_size = Cs.shape[0]
-    # reshape to voigt notation
-    cs_tmp = tf.reshape(Cs, [batch_size, 9])
-    # drop dependent values
-    cs = tf.concat([cs_tmp[:,:3], cs_tmp[:,4:6], cs_tmp[:,8:]], 1)
-    return cs
+# def reshape_C(Cs):
+#     batch_size = Cs.shape[0]
+#     # reshape to voigt notation
+#     cs_tmp = tf.reshape(Cs, [batch_size, 9])
+#     # drop dependent values
+#     cs = tf.concat([cs_tmp[:,:3], cs_tmp[:,4:6], cs_tmp[:,8:]], 1)
+#     return cs
 
 def get_sample_weights(Ps, batch_sizes):
     ''' Computes rample weights according to loss weighting strategy '''
@@ -111,7 +111,7 @@ def generate_concentric_paths(fnums):
     ''' Generates path strings for concentric data '''
     paths = []
     for num in fnums:
-        paths.append(f'data/concentric/{num}.txt')
+        paths.append(f'data/02_hyperelasticity_I/concentric/{num}.txt')
     return paths
 
 # %%
@@ -148,6 +148,6 @@ def compute_potential(I1, J, I4, I5):
 
 def compute_invariants(F):
     ''' Wrapper function to compute invariants from deformation gradient '''
-    C = lm.RightCauchyGreenLayer()(F)
-    I = lm.InvariantLayer()(F, C)
+    C = lm.RightCauchyGreenTensor()(F)
+    I = lm.TransIsoInvariants()(F, C)
     return I

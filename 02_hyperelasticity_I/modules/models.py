@@ -32,8 +32,9 @@ factory method
 def make_layer(r_type, **kwargs):
     """ Calls and returns layer object """
     cf = {
-        'Naive': NaiveLayer,
-        'PhysicsAugmented': PhysicsAugmentedLayer
+        'Naive': Naive,
+        'TransverseIsotropy': TransverseIsotropy
+        'CubicAnisotropy': CubicAnisotropy
         }
     class_obj = cf.get(r_type, None)
     if class_obj:
@@ -46,15 +47,15 @@ wrapper layers
 
 '''
 
-class NaiveLayer(layers.Layer):
+class Naive(layers.Layer):
     """ Wrapper layer for naive neural network model """
     def __init__(self):
         super().__init__()
         # define non-trainable layers
-        self.ls = [RightCauchyGreenLayer()]
+        self.ls = [RightCauchyGreenTensor()]
         self.ls += [layers.Flatten()]
-        self.ls += [IndependentValuesLayer()]
-        self.ls += [FeedForwardLayer()]
+        self.ls += [IndependentValues()]
+        self.ls += [FeedForward()]
         self.ls += [layers.Reshape((3,3))]
   
     def __call__(self, x):
@@ -62,15 +63,33 @@ class NaiveLayer(layers.Layer):
             x = l(x)
         return x
 
-class PhysicsAugmentedLayer(layers.Layer):
-    """ Wrapper layer invariante based physics augmented neural network """
+class TransverseIsotropy(layers.Layer):
+    """ Wrapper layer for invariant based physics augmented neural network
+    and transverse isotropy """
     def __init__(self):
         super().__init__()
         # define non-trainable layers
-        self.lC = RightCauchyGreenLayer()
-        self.lI = InvariantLayer()
+        self.lC = RightCauchyGreenTensor()
+        self.lI = TransIsoInvariants()
         # define neural network
-        self.lNN = InputConvexLayer()
+        self.lNN = InputConvex()
+
+    def __call__(self, x):
+        y = self.lC(x)
+        y = self.lI(x, y)
+        y = self.lNN(y)
+        return y
+
+class CubicAnisotropy(layers.Layer):
+    """ Wrapper layer for invariant based physics augmented neural network
+    and cubic anisotropy """
+    def __init__(self):
+        super().__init__()
+        # define non-trainable layers
+        self.lC = RightCauchyGreenTensor()
+        self.lI = CubicAnisoInvariants()
+        # define neural network
+        self.lNN = InputConvex()
 
     def __call__(self, x):
         y = self.lC(x)
@@ -84,7 +103,7 @@ _x_to_y: custom trainable layers
 
 """
 
-class SobolevLayer(layers.Layer):
+class Sobolev(layers.Layer):
     ''' Layer that computes the gradient '''
     def __init__(self, l):
         super().__init__()
@@ -96,7 +115,7 @@ class SobolevLayer(layers.Layer):
             y = self.l(x)
         return g.gradient(y, x)
 
-class FeedForwardLayer(layers.Layer):
+class FeedForward(layers.Layer):
     ''' Layer that implements a feed forward neural network '''
     def __init__(self):
         super().__init__()
@@ -113,7 +132,7 @@ class FeedForwardLayer(layers.Layer):
             x = l(x)
         return x
 
-class InputConvexLayer(layers.Layer):
+class InputConvex(layers.Layer):
     """ Layer that implements an input convex neural network """
     def __init__(self):
         super().__init__()
@@ -136,7 +155,7 @@ custom non-trainable layers
 
 '''
 
-class RightCauchyGreenLayer(layers.Layer):
+class RightCauchyGreenTensor(layers.Layer):
     ''' Layer that computes the right Cauchy-Green tensor '''
     def __init__(self):
         super().__init__()
@@ -145,31 +164,47 @@ class RightCauchyGreenLayer(layers.Layer):
         return tf.einsum('ikj,ikl->ijl', F, F)
 
 
-class InvariantLayer(layers.Layer):
-    ''' Layer that computes four invariants of a given deformatioin gradient '''
+class TransIsoInvariants(layers.Layer):
+    ''' Layer that computes the four invariants for transverly isotropic 
+    material behaviour '''
     def __init__(self):
         super().__init__()
+        # transversely isotropic structural tensor
+        self.G = np.array([[4, 0, 0],
+                            [0, 0.5, 0],
+                            [0, 0, 0.5]])
 
     @tf.autograph.experimental.do_not_convert
     def __call__(self, F, C):
-        # transversely isotropic structural tensor
-        G_ti = np.array([[4, 0, 0],
-                            [0, 0.5, 0],
-                            [0, 0, 0.5]])
         # compute invariants
         I1 = tf.linalg.trace(C)
         J = tf.linalg.det(F)
-        I4 = tf.linalg.trace(C @ G_ti)
+        I4 = tf.linalg.trace(C @ self.G)
 
         C_inv = tf.linalg.inv(C)
-        I3 = tf.linalg.det(C)
         # catch error if a KerasTensor is passed
-        Cof_C = I3[:, tf.newaxis, tf.newaxis] * C_inv
-        I5 = tf.linalg.trace(Cof_C @ G_ti)
+        Cof_C = tf.linalg.det(C)[:, tf.newaxis, tf.newaxis] * C_inv
+        I5 = tf.linalg.trace(Cof_C @ self.G)
         return tf.stack([I1, J, -J, I4, I5], axis=1)
+
+class CubicAnisoInvariants(layers.Layer):
+    ''' Layer that computed the invariants for cubic anisotropy '''
+    def __init__(self):
+        super().__init__()
+        self.G = tf.tensordot(tf.eye(3), tf.eye(3), axes=0) # TODO: make sure this code is correct
+
+    def __call__(self, F, C):
+        I1 = tf.linalg.trace(C)
+        C_inv = tf.linalg.inv(C)
+        Cof_C = tf.linalg.det(C)[:, tf.newaxis, tf.newaxis] * C_inv
+        I2 = tf.linalg.trace()
+        J = tf.linalg.det(F)
+        I7 = tf.tensordot(C, tf.tensordot(self.G, C))
+        I11 = tf.tensordot(Cof_C, tf.tensordot(self.G, Cof_C))
+        return tf.stack([I1, I2, J, -J, I7, I11], axis=1)
     
 
-class IndependentValuesLayer(layers.Layer):
+class IndependentValues(layers.Layer):
     ''' Layer that extracts six independent values of the right Cauchy green tensor '''
     def __init__(self):
         super().__init__()
@@ -193,7 +228,7 @@ def main(loss_weights, **kwargs):
     l_nn = make_layer(**kwargs)
     ys = l_nn(xs)
     # create and build sobolev layer
-    dys = SobolevLayer(l_nn)(xs)
+    dys = Sobolev(l_nn)(xs)
 
     model = tf.keras.Model(inputs=[xs], outputs=[ys, dys])
     # define optimizer and loss function

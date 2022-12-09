@@ -33,7 +33,7 @@ import modules.data as ld
 #     def evaluate(self, test_paths):
 #         """ Evaluate model prediction on test reference cases """
 
-class PhysicsAugmented:
+class TransverseIsotropy:
     ''' Class for training a physics augmented neutral network
     calling order: initialize --> preprocess --> calibrate --> evaluate '''
     def __init__(self, paths, loss_weights, loss_weighting):
@@ -49,7 +49,7 @@ class PhysicsAugmented:
         self.__preprocess()
 
         # create model
-        self.model = lm.main(r_type='PhysicsAugmented', loss_weights=self.loss_weights)
+        self.model = lm.main(r_type='TransverseIsotropy', loss_weights=self.loss_weights)
 
     def __load(self, paths):
         ''' Load data for training or testing from a path '''
@@ -128,7 +128,7 @@ class PhysicsAugmented:
         if showplots:
             # reshape right Cauchy-Green-Tensor
             #Cs = tf.einsum('ikj,ikl->ijl',xs,xs)
-            cs = lm.IndependentValuesLayer()(layers.Flatten()(lm.RightCauchyGreenLayer()(xs)))
+            cs = lm.IndependentValues()(layers.Flatten()(lm.RightCauchyGreenTensor()(xs)))
             # plots
             fname = path.split('/')[-1].split('.')[0]
             pl.plot_right_cauchy_green_tensor(cs, title=path, fname=fname)
@@ -215,7 +215,7 @@ class Naive:
 
         if showplots:
             # plot right Chauchy-Green tensor
-            cs = lm.IndependentValuesLayer()(layers.Flatten()(lm.RightCauchyGreenLayer()(xs)))
+            cs = lm.IndependentValues()(layers.Flatten()(lm.RightCauchyGreenTensor()(xs)))
             fname = path.split('/')[-1].split('.')[0]
             pl.plot_right_cauchy_green_tensor(cs, title=path, fname=fname)
             pl.plot_stress_tensor_prediction(ys, ys_pred, title=path, fname=fname)

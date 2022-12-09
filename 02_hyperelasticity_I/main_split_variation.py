@@ -42,7 +42,7 @@ test_train_split = np.array([0.7, 0.8, 0.9])
 test_train_split = np.array([0.8])
 #test_train_split = np.array([0.1, 0.2])
 JMAX = 5
-t_type = 'PhysicsAugmented' # 'Naive'
+t_type = 'TransverseIsotropy' # 'Naive'
 
 loss_weighting = True
 loss_weights = [1, 1] # only used for physics augmented training
@@ -86,8 +86,8 @@ for i, split in enumerate(test_train_split):
     for j in range(JMAX):
         print(f'Model {i * JMAX + (j + 1)}/{NUMSPLITS * JMAX}')
 
-        if t_type == 'PhysicsAugmented':
-            tmodel = training.PhysicsAugmented(paths=train_paths, loss_weights=loss_weights, loss_weighting=True)
+        if t_type == 'TransverseIsotropy':
+            tmodel = training.TransverseIsotropy(paths=train_paths, loss_weights=loss_weights, loss_weighting=True)
         else:
             tmodel = training.Naive(paths=train_paths, loss_weighting=loss_weighting)
 
@@ -163,7 +163,7 @@ Plot losses from csv file
 df_train = pd.read_csv('out/train_losses.csv')
 df_test = pd.read_csv('out/test_losses.csv')
 
-if t_type  == 'PhysicsAugmented':
+if t_type  == 'TransverseIsotropy':
     title = 'Evaluation on training data'
     pl.plot_loss_over_train_split_physics_augmented(df_train, title=title, fname='train_loss')
     title = 'Evaluation on test data'
