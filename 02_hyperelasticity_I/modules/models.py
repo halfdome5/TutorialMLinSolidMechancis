@@ -33,7 +33,7 @@ def make_layer(r_type, **kwargs):
     """ Calls and returns layer object """
     cf = {
         'Naive': Naive,
-        'TransverseIsotropy': TransverseIsotropy
+        'TransverseIsotropy': TransverseIsotropy,
         'CubicAnisotropy': CubicAnisotropy
         }
     class_obj = cf.get(r_type, None)
