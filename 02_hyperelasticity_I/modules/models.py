@@ -34,7 +34,8 @@ def make_layer(r_type, **kwargs):
     cf = {
         'Naive': Naive,
         'TransverseIsotropy': TransverseIsotropy,
-        'CubicAnisotropy': CubicAnisotropy
+        'CubicAnisotropy': CubicAnisotropy,
+        'DefGradBased': DefGradBased
         }
     class_obj = cf.get(r_type, None)
     if class_obj:
@@ -97,7 +98,7 @@ class CubicAnisotropy(layers.Layer):
         y = self.lNN(y)
         return y
 
-class DeformationGradientBasedNN(layers.Layer):
+class DefGradBased(layers.Layer):
     '''  Wrapper layer for deformation gradient based, polyconvex physics augmented neural networks'''
     def __init__(self):
         # define non-trainable layers
