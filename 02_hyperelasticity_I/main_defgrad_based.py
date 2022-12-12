@@ -16,6 +16,7 @@ Import modules
 
 """
 import tensorflow as tf
+from scipy.spatial.transform import Rotation as R
 import numpy as np
 import datetime
 import pandas as pd
@@ -55,11 +56,57 @@ print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
 
 # %% Loss evalutation
 
-results = tmodel.evaluate(paths[:], showplots=True)
+results = tmodel.evaluate(paths[:], 
+                        qobj=R.identity().as_matrix(),
+                        qmat=R.identity().as_matrix(),
+                        showplots=True)
 loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
 loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
 loss['paths'] = paths[:]
 loss
+
+# %% Observers
+robjs = R.identity()
+robjs = R.concatenate([robjs, R.random(9)])
+
+for Qobj in robjs.as_matrix(): # iteration over material symmetry group
+    #print(Qobj)
+    results = tmodel.evaluate(paths[:],  
+                            qobj=Qobj,
+                            qmat=R.identity().as_matrix(),
+                            showplots=False)
+    print(results)
+
+# %% Material symmetry group
+
+rmats = R.identity()
+rmats = R.concatenate([rmats, R.from_euler('x', [np.pi/2, np.pi, 3*np.pi/2])])
+rmats = R.concatenate([rmats, R.from_euler('y', [np.pi/2, np.pi, 3*np.pi/2])])
+rmats = R.concatenate([rmats, R.from_euler('z', [np.pi/2, np.pi, 3*np.pi/2])])
+rmats = R.concatenate([rmats, R.from_rotvec( np.pi/np.sqrt(2) * np.array([[1, 1, 0],
+                                                                    [-1, 1, 0],
+                                                                    [1, 0, 1],
+                                                                    [-1, 0, 1],
+                                                                    [0, 1, 1],
+                                                                    [0, -1, 1]]))])
+rmats = R.concatenate([rmats, R.from_rotvec( 2/3 * np.pi/np.sqrt(3) * np.array([[1, 1, 1],
+                                                                        [-1, 1, 1],
+                                                                        [1, -1, 1],
+                                                                        [-1, -1, 1]]))])
+rmats = R.concatenate([rmats, R.from_rotvec( 4/3 * np.pi/np.sqrt(3) * np.array([[1, 1, 1],
+                                                                        [-1, 1, 1],
+                                                                        [1, -1, 1],
+                                                                        [-1, -1, 1]]))])
+
+for Qmat in rmats.as_matrix(): # iteration over material symmetry group
+    #print(Qmat)
+    results = tmodel.evaluate(paths[7:8],  
+                            qobj=R.identity().as_matrix(),
+                            qmat=Qmat,
+                            showplots=True)
+    #print(results)
+
+
 
 # %% Model parameters
 

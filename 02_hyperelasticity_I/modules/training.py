@@ -97,9 +97,13 @@ class DefGradBased:
             losses[i,:] = self.__evaluate_single_load_path(path, **kwargs)
         return losses
 
-    def __evaluate_single_load_path(self, path, showplots=False):
+    def __evaluate_single_load_path(self, path, qobj, qmat, showplots=False):
         ''' Perform evaluation of a single load path '''
         xs, ys, dys, batch_size = self.__load([path])
+
+        # evaluate objectivity and material symmetry condition
+        xs = qobj @ xs @ qmat
+        dys = qobj @ dys @ qmat
 
         # predict using the trained model
         ys_pred, dys_pred = self.model.predict(xs)

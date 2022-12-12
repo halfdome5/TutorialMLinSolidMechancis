@@ -37,26 +37,26 @@ Parameter definition
 #
 
 FNUM = 100
-test_train_split = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99])
-test_train_split = np.array([0.7, 0.8, 0.9])
-test_train_split = np.array([0.8])
+test_train_split = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95])
+#test_train_split = np.array([0.7, 0.8, 0.9])
+#test_train_split = np.array([0.8])
 #test_train_split = np.array([0.1, 0.2])
 JMAX = 5
-t_type = 'TransverseIsotropy' # 'Naive'
+t_type = 'Naive' # 'Naive'
 
 loss_weighting = True
 loss_weights = [1, 1] # only used for physics augmented training
-epochs = 5000
+epochs = 10000
 verbose = 0
 
 # Alternative:
-paths = [
-    'data/calibration/biaxial.txt',
-    'data/calibration/pure_shear.txt',
-    'data/calibration/uniaxial.txt',
-    'data/test/biax_test.txt',
-    'data/test/mixed_test.txt'
-    ]
+# paths = [
+#     'data/calibration/biaxial.txt',
+#     'data/calibration/pure_shear.txt',
+#     'data/calibration/uniaxial.txt',
+#     'data/test/biax_test.txt',
+#     'data/test/mixed_test.txt'
+#     ]
 
 #%%
 '''
@@ -80,8 +80,8 @@ for i, split in enumerate(test_train_split):
     train_paths = ld.generate_concentric_paths(ftrain)
     test_paths = ld.generate_concentric_paths(ftest)
     # Alternaive paths
-    train_paths = paths[:3]
-    test_paths = paths[3:]
+    # train_paths = paths[:3]
+    # test_paths = paths[3:]
 
     for j in range(JMAX):
         print(f'Model {i * JMAX + (j + 1)}/{NUMSPLITS * JMAX}')
