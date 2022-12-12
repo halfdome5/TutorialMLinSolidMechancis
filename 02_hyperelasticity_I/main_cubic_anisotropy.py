@@ -40,10 +40,12 @@ paths = [
     ]
 
 lw = [1, 1]
+scaling = False # scale stresses to range [-1, 1]
 
 tmodel = training.CubicAnisotropy(paths=paths[:4],
                                 loss_weights=lw,
-                                loss_weighting=True)
+                                loss_weighting=True,
+                                scaling=scaling)
 
 tmodel.calibrate(epochs=5000, verbose=2)
 

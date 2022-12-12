@@ -236,16 +236,16 @@ class CubicAnisoInvariants(layers.Layer):
     ''' Layer that computed the invariants for cubic anisotropy '''
     def __init__(self):
         super().__init__()
-        self.G = tf.tensordot(tf.eye(3), tf.eye(3), axes=0) # TODO: make sure this code is correct
+        self.G = np.tensordot(np.eye(3), np.eye(3), axes=0) # TODO: make sure this code is correct
 
     def __call__(self, F, C):
         I1 = tf.linalg.trace(C)
         C_inv = tf.linalg.inv(C)
         Cof_C = tf.linalg.det(C)[:, tf.newaxis, tf.newaxis] * C_inv
-        I2 = tf.linalg.trace()
+        I2 = tf.linalg.trace(Cof_C)
         J = tf.linalg.det(F)
-        I7 = tf.tensordot(C, tf.tensordot(self.G, C))
-        I11 = tf.tensordot(Cof_C, tf.tensordot(self.G, Cof_C))
+        I7 = tf.einsum('xij,ijkl,xkl->x', C, self.G, C)
+        I11 = tf.einsum('xij,ijkl,xkl->x', Cof_C, self.G, Cof_C)
         return tf.stack([I1, I2, J, -J, I7, I11], axis=1)
     
 

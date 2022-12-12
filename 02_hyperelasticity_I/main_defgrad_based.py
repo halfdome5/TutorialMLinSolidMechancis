@@ -41,10 +41,12 @@ paths = [
     ]
 
 lw = [1, 1]
+scaling = True
 
-tmodel = training.DefGradBased(paths=paths[:4],
+tmodel = training.DefGradBased(paths=paths[:3],
                                 loss_weights=lw,
-                                loss_weighting=True)
+                                loss_weighting=True,
+                                scaling=True)
 
 tmodel.calibrate(epochs=5000, verbose=2)
 
@@ -65,7 +67,7 @@ loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
 loss['paths'] = paths[:]
 loss
 
-# %% Observers
+# %% Evaluate objectivity
 robjs = R.identity()
 robjs = R.concatenate([robjs, R.random(9)])
 
@@ -77,8 +79,9 @@ for Qobj in robjs.as_matrix(): # iteration over material symmetry group
                             showplots=False)
     print(results)
 
-# %% Material symmetry group
+# %% Evaluate material symmetry
 
+# create material symmetry group
 rmats = R.identity()
 rmats = R.concatenate([rmats, R.from_euler('x', [np.pi/2, np.pi, 3*np.pi/2])])
 rmats = R.concatenate([rmats, R.from_euler('y', [np.pi/2, np.pi, 3*np.pi/2])])
@@ -103,7 +106,7 @@ for Qmat in rmats.as_matrix(): # iteration over material symmetry group
     results = tmodel.evaluate(paths[7:8],  
                             qobj=R.identity().as_matrix(),
                             qmat=Qmat,
-                            showplots=True)
+                            showplots=False)
     #print(results)
 
 

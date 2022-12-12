@@ -36,20 +36,23 @@ import modules.data as ld
 class DefGradBased:
     ''' Class for training a physics augmented neutral network
     calling order: initialize --> preprocess --> calibrate --> evaluate '''
-    def __init__(self, paths, loss_weights, loss_weighting):
+    def __init__(self, paths, loss_weights, loss_weighting, scaling):
         # initialize variables
         self.loss_weights = loss_weights
         self.loss_weighting = loss_weighting
+        self.scaling = scaling
 
         # load calibration data
         self.xs, self.ys, self.dys, self.batch_sizes = self.__load(paths)
         
         # preform pre-preocessing
         self.sample_weights = np.ones(np.sum(self.batch_sizes))
+        if self.scaling: self.scalefactor = tf.math.reduce_max(tf.math.abs(self.dys)) ** (-1)
+        else: self.scalefactor = 1
         self.__preprocess()
 
         # create model
-        self.model = lm.main(r_type='TransverseIsotropy', loss_weights=self.loss_weights)
+        self.model = lm.main(r_type='DefGradBased', loss_weights=self.loss_weights)
 
     def __load(self, paths):
         ''' Load data for training or testing from a path '''
@@ -62,6 +65,10 @@ class DefGradBased:
 
     def __preprocess(self):
         ''' Preforms necessary pre-preocessing steps before model calibration '''
+        # rescale
+        self.ys = self.ys * self.scalefactor
+        self.dys = self.dys * self.scalefactor
+        
         # apply load weighting strategy
         if self.loss_weighting:
             self.sample_weights = ld.get_sample_weights(self.xs, self.batch_sizes)
@@ -101,6 +108,15 @@ class DefGradBased:
         ''' Perform evaluation of a single load path '''
         xs, ys, dys, batch_size = self.__load([path])
 
+        # rescale
+        ys = ys * self.scalefactor
+        dys = dys * self.scalefactor
+
+        if self.loss_weighting:
+            sample_weights = ld.get_sample_weights(xs, batch_size)
+        else:
+            sample_weights = np.ones(np.sum(batch_size))
+
         # evaluate objectivity and material symmetry condition
         xs = qobj @ xs @ qmat
         dys = qobj @ dys @ qmat
@@ -111,21 +127,16 @@ class DefGradBased:
         # Potential correction - for P training
         # shift reference value ys by normalization offset
         # to ensure reasonable results from tensorflow evalutation function
-        if self.loss_weights == [0, 1]:
-            ys_I, _ = self.evaluate_normalization()
-            # normalization
-            ys_eval = ys + ys_I[0,0]
-            ys_pred = ys_pred - ys_I[0,0]
-        else:
-            # no normalization
-            ys_eval = ys
+        # if self.loss_weights == [0, 1]:
+        #     ys_I, _ = self.evaluate_normalization()
+        #     # normalization
+        #     ys_eval = ys + ys_I[0,0]
+        #     ys_pred = ys_pred - ys_I[0,0]
+        # else:
+        #     # no normalization
+        #     ys_eval = ys
 
-        if self.loss_weighting:
-            sample_weights = ld.get_sample_weights(xs, batch_size)
-        else:
-            sample_weights = np.ones(np.sum(batch_size))
-
-        loss = self.model.evaluate(xs, [ys_eval, dys], 
+        loss = self.model.evaluate(xs, [ys, dys], 
                                     verbose=0,
                                     sample_weight=sample_weights)
 
@@ -144,20 +155,23 @@ class DefGradBased:
 class CubicAnisotropy:
     ''' Class for training a physics augmented neutral network
     calling order: initialize --> preprocess --> calibrate --> evaluate '''
-    def __init__(self, paths, loss_weights, loss_weighting):
+    def __init__(self, paths, loss_weights, loss_weighting, scaling):
         # initialize variables
         self.loss_weights = loss_weights
         self.loss_weighting = loss_weighting
+        self.scaling = scaling
 
         # load calibration data
         self.xs, self.ys, self.dys, self.batch_sizes = self.__load(paths)
         
         # preform pre-preocessing
         self.sample_weights = np.ones(np.sum(self.batch_sizes))
+        if self.scaling: self.scalefactor = tf.math.reduce_max(tf.math.abs(self.dys)) ** (-1)
+        else: self.scalefactor = 1
         self.__preprocess()
 
         # create model
-        self.model = lm.main(r_type='TransverseIsotropy', loss_weights=self.loss_weights)
+        self.model = lm.main(r_type='CubicAnisotropy', loss_weights=self.loss_weights)
 
     def __load(self, paths):
         ''' Load data for training or testing from a path '''
@@ -170,6 +184,10 @@ class CubicAnisotropy:
 
     def __preprocess(self):
         ''' Preforms necessary pre-preocessing steps before model calibration '''
+        # rescale
+        self.ys = self.ys * self.scalefactor
+        self.dys = self.dys * self.scalefactor
+
         # apply load weighting strategy
         if self.loss_weighting:
             self.sample_weights = ld.get_sample_weights(self.xs, self.batch_sizes)
@@ -209,31 +227,39 @@ class CubicAnisotropy:
         ''' Perform evaluation of a single load path '''
         xs, ys, dys, batch_size = self.__load([path])
 
-        # predict using the trained model
-        ys_pred, dys_pred = self.model.predict(xs)
-
-        # Potential correction - for P training
-        # shift reference value ys by normalization offset
-        # to ensure reasonable results from tensorflow evalutation function
-        if self.loss_weights == [0, 1]:
-            ys_I, _ = self.evaluate_normalization()
-            # normalization
-            ys_eval = ys + ys_I[0,0]
-            ys_pred = ys_pred - ys_I[0,0]
-        else:
-            # no normalization
-            ys_eval = ys
+        # scaling
+        ys = ys * self.scalefactor
+        dys = dys * self.scalefactor
 
         if self.loss_weighting:
             sample_weights = ld.get_sample_weights(xs, batch_size)
         else:
             sample_weights = np.ones(np.sum(batch_size))
 
-        loss = self.model.evaluate(xs, [ys_eval, dys], 
+        # predict using the trained model
+        ys_pred, dys_pred = self.model.predict(xs)
+
+        # Potential correction - for P training
+        # shift reference value ys by normalization offset
+        # to ensure reasonable results from tensorflow evalutation function
+        # if self.loss_weights == [0, 1]:
+        #     ys_I, _ = self.evaluate_normalization()
+        #     # normalization
+        #     ys_eval = ys + ys_I[0,0]
+        #     ys_pred = ys_pred - ys_I[0,0]
+        # else:
+        #     # no normalization
+        #     ys_eval = ys
+
+        loss = self.model.evaluate(xs, [ys, dys], 
                                     verbose=0,
                                     sample_weight=sample_weights)
 
         if showplots:
+             # rescale to originale scale for plotting
+            ys_pred = ys_pred
+            dys_pred = dys_pred
+
             # reshape right Cauchy-Green-Tensor
             #Cs = tf.einsum('ikj,ikl->ijl',xs,xs)
             cs = lm.IndependentValues()(layers.Flatten()(lm.RightCauchyGreenTensor()(xs)))
