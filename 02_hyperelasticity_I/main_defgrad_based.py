@@ -41,9 +41,9 @@ paths = [
     ]
 
 lw = [1, 1]
-scaling = True
+scaling = False
 
-tmodel = training.DefGradBased(paths=paths[:3],
+tmodel = training.DefGradBased(paths=paths[:4],
                                 loss_weights=lw,
                                 loss_weighting=True,
                                 scaling=True)

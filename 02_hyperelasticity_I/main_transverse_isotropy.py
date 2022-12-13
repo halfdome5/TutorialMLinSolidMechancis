@@ -16,7 +16,6 @@ Import modules
 
 """
 import tensorflow as tf
-import numpy as np
 import datetime
 import pandas as pd
 now = datetime.datetime.now
@@ -43,7 +42,7 @@ FNUM = 100
 
 lw = [1, 1]
 
-tmodel = training.TransverseIsotropy(paths=paths[:1],
+tmodel = training.TransverseIsotropy(paths=paths[2:3],
                                 loss_weights=lw,
                                 loss_weighting=True)
 
@@ -57,10 +56,10 @@ print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
 
 # %% Loss evalutation
 
-results = tmodel.evaluate(paths[:1], showplots=False)
+results = tmodel.evaluate(paths[:], showplots=True)
 loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
 loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
-loss['paths'] = paths[:1]
+loss['paths'] = paths[:]
 loss
 
 # %% Model parameters

@@ -142,7 +142,6 @@ class DefGradBased:
 
         if showplots:
             # reshape right Cauchy-Green-Tensor
-            #Cs = tf.einsum('ikj,ikl->ijl',xs,xs)
             cs = lm.IndependentValues()(layers.Flatten()(lm.RightCauchyGreenTensor()(xs)))
             # plots
             fname = path.split('/')[-1].split('.')[0]

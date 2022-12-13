@@ -101,6 +101,7 @@ class CubicAnisotropy(layers.Layer):
 class DefGradBased(layers.Layer):
     '''  Wrapper layer for deformation gradient based, polyconvex physics augmented neural networks'''
     def __init__(self):
+        super().__init__()
         # define non-trainable layers
         self.ls = [PolyconvexArguments()]
         # define neutral network
@@ -206,7 +207,10 @@ class PolyconvexArguments(layers.Layer):
         F_inv = tf.linalg.inv(F)
         Cof_F = tf.linalg.det(F)[:, tf.newaxis, tf.newaxis] * F_inv
         detF = tf.linalg.det(F)
-        return tf.stack([F_inv, Cof_F, detF], axis = 1) #TODO make sure that these values are actually stackable
+
+        F = layers.Flatten()(F)
+        Cof_F = layers.Flatten()(Cof_F)
+        return tf.concat([F, Cof_F, detF[:,tf.newaxis]], axis=1)
 
 
 class TransIsoInvariants(layers.Layer):

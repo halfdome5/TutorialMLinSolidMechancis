@@ -346,9 +346,9 @@ def plot_loss_over_train_split_naive(df, title, fname):
 
     NUMSPLITS = int(df.split.size / 4)
     fig = plt.figure(dpi=600)
-    plt.semilogy(df.split[:NUMSPLITS],df.total[:NUMSPLITS], color='firebrick', marker='o', label='mean')
-    plt.semilogy(df.split[:NUMSPLITS],df.total[NUMSPLITS:2 * NUMSPLITS], color='firebrick', marker='s', label='median')
-    plt.fill_between(df.split[:NUMSPLITS], df.total[2 * NUMSPLITS: 3 * NUMSPLITS], df.total[3 * NUMSPLITS:], color='firebrick', alpha=alpha)
+    plt.semilogy(df.split[:NUMSPLITS],df.function[:NUMSPLITS], color='firebrick', marker='o', label='mean')
+    plt.semilogy(df.split[:NUMSPLITS],df.function[NUMSPLITS:2 * NUMSPLITS], color='firebrick', marker='s', label='median')
+    plt.fill_between(df.split[:NUMSPLITS], df.function[2 * NUMSPLITS: 3 * NUMSPLITS], df.function[3 * NUMSPLITS:], color='firebrick', alpha=alpha)
     
     plt.title(title)
     plt.xlabel('training fraction')
