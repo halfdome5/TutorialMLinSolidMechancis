@@ -1,6 +1,7 @@
 # %% [Load modules]
 import tensorflow as tf
 from tensorflow.keras import layers
+from scipy.spatial.transform import Rotation as R
 import numpy as np
 import datetime
 now = datetime.datetime.now
@@ -94,6 +95,46 @@ class DefGradBased:
         ''' Calls evaluate_normalization static function '''
         return evaluate_normalization(self.model)
 
+    def evaluate_objectivity(self, paths, robjs):
+        ''' Evaluate objectivity using rotations "robjs" '''
+        # get batch sizes to initiliaze correct array dimensions
+        batch_sizes = ld.load_stress_strain_data(paths)[3]
+
+        losses = np.zeros([len(paths), 3])
+        #potentials = np.zeros([robjs.__len__(), len(paths), np.sum(batch_sizes), 1])
+        #stresses = np.zeros([robjs.__len__(), len(paths), np.sum(batch_sizes), 3, 3])
+
+        for i, path in enumerate(paths):
+            potentials = np.zeros([robjs.__len__(), batch_sizes[i], 1])
+            stresses = np.zeros([robjs.__len__(), batch_sizes[i], 3, 3])
+
+            for j, Qobj in enumerate(robjs.as_matrix()):
+                losses[i,:], _, pred, _ = self.__evaluate_single_load_path(path, Qobj, R.identity().as_matrix())
+                potentials[j,:,:] = pred[0]
+                stresses[j,:,:] = pred[1]
+                #potentials[j, i, np.sum(batch_sizes[:i]):np.sum(batch_sizes[:i+1]), :] = pred[0]
+                #stresses[j, i, np.sum(batch_sizes[:i]):np.sum(batch_sizes[:i+1]), :] = pred[1]
+
+            W = [np.mean(potentials, axis=0),
+                np.median(potentials, axis=0),
+                np.min(potentials, axis=0),
+                np.max(potentials, axis=0)]
+
+            P = [np.mean(stresses, axis=0),
+                np.median(stresses, axis=0),
+                np.min(stresses, axis=0),
+                np.max(stresses, axis=0)]
+            
+            fname = path.split('/')[-1].split('.')[0]
+            pl.plot_stress_objectivity(P, title=path, fname=fname)
+           
+
+
+        #  TODO: Plot median stress, maximum and minimum for each load step and
+        # and separated by load paths
+
+
+
     def evaluate(self, paths, **kwargs):
         ''' Perform evaluation '''
         # initialization
@@ -101,7 +142,7 @@ class DefGradBased:
 
         # iteration over load paths
         for i, path in enumerate(paths):
-            losses[i,:] = self.__evaluate_single_load_path(path, **kwargs)
+            losses[i,:]  = self.__evaluate_single_load_path(path, **kwargs)[0]
         return losses
 
     def __evaluate_single_load_path(self, path, qobj, qmat, showplots=False):
@@ -149,7 +190,7 @@ class DefGradBased:
             pl.plot_potential_prediction(ys, ys_pred, title=path, fname=fname)
             pl.plot_stress_tensor_prediction(dys, dys_pred, title=path, fname=fname)
 
-        return loss
+        return loss, [xs, ys, dys], [ys_pred, dys_pred], batch_size
 
 class CubicAnisotropy:
     ''' Class for training a physics augmented neutral network

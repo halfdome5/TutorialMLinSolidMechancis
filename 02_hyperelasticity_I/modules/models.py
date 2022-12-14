@@ -135,9 +135,9 @@ class FeedForward(layers.Layer):
     def __init__(self):
         super().__init__()
         # define hidden layers with activation function
-        self.ls = [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus')]
-        self.ls += [layers.Dense(8, 'softplus')]
+        self.ls = [layers.Dense(16, 'softplus')]
+        self.ls += [layers.Dense(16, 'softplus')]
+        self.ls += [layers.Dense(16, 'softplus')]
         # scalar-valued output function
         self.ls += [layers.Dense(9)]
 

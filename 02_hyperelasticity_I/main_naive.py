@@ -37,16 +37,16 @@ paths = [
     ]
 
 #Alternative: concentric data
-# FNUM = 100
-# fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
-# paths = ld.generate_concentric_paths(fnum)
+FNUM = 100
+fnum = tf.random.shuffle(np.arange(1,FNUM + 1))
+paths = ld.generate_concentric_paths(fnum)
 
 loss_weighting=True
 
-tmodel = training.Naive(paths=paths[:3],
+tmodel = training.Naive(paths=paths[:20],
                         loss_weighting=loss_weighting)
 
-tmodel.calibrate(epochs=1000, verbose=2)
+tmodel.calibrate(epochs=10000, verbose=2)
 
 # %% Evalutation of normalization criterion
 
@@ -57,9 +57,9 @@ print(f'P(I) =\t{ys_I[0, 0]}\n\t{ys_I[0, 1]}\n\t{ys_I[0, 2]}')
 # %% Loss evalutation
 
 # in the naive approach ys is already the stress, therefore dys is ignored
-results = tmodel.evaluate(paths[:], showplots=True)
+results = tmodel.evaluate(paths[:20], showplots=True)
 loss = pd.DataFrame(results[:,0], columns=['total'])
-loss['paths'] = paths[:]
+loss['paths'] = paths[:20]
 loss
 # %% Model parameters
 

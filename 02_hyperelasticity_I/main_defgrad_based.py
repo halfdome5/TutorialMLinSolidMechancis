@@ -48,7 +48,7 @@ tmodel = training.DefGradBased(paths=paths[:4],
                                 loss_weighting=True,
                                 scaling=True)
 
-tmodel.calibrate(epochs=5000, verbose=2)
+tmodel.calibrate(epochs=1000, verbose=2)
 
 # %% Evalutation of normalization criterion
 
@@ -57,7 +57,6 @@ print(f'\nW(I) =\t{ys_I[0,0]}')
 print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
 
 # %% Loss evalutation
-
 results = tmodel.evaluate(paths[:], 
                         qobj=R.identity().as_matrix(),
                         qmat=R.identity().as_matrix(),
@@ -67,17 +66,22 @@ loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
 loss['paths'] = paths[:]
 loss
 
+
 # %% Evaluate objectivity
 robjs = R.identity()
 robjs = R.concatenate([robjs, R.random(9)])
 
-for Qobj in robjs.as_matrix(): # iteration over material symmetry group
-    #print(Qobj)
-    results = tmodel.evaluate(paths[:],  
-                            qobj=Qobj,
-                            qmat=R.identity().as_matrix(),
-                            showplots=False)
-    print(results)
+# for Qobj in robjs.as_matrix(): # iteration over material symmetry group
+#     #print(Qobj)
+#     results = tmodel.evaluate(paths[4:],  
+#                             qobj=Qobj,
+#                             qmat=R.identity().as_matrix(),
+#                             showplots=False)
+#     print(results)
+
+tmodel.evaluate_objectivity(paths, robjs)
+
+#def plot_observers()
 
 # %% Evaluate material symmetry
 
