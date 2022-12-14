@@ -27,7 +27,7 @@ tf.keras.backend.set_floatx('float64')
 import modules.data as ld
 import modules.training as training
 
-# %% Training
+# %% Data
 
 paths = [
     'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_uniaxial.txt',
@@ -40,52 +40,11 @@ paths = [
     'data/03_hyperelasticity_II/soft_beam_lattice_metamaterials/data/BCC_test3.txt'
     ]
 
-lw = [1, 1]
-scaling = False
+# %% Roations
+# Random rotations for objectivity training
+robjs = R.random(16)
 
-tmodel = training.DefGradBased(paths=paths[:4],
-                                loss_weights=lw,
-                                loss_weighting=True,
-                                scaling=True)
-
-tmodel.calibrate(epochs=1000, verbose=2)
-
-# %% Evalutation of normalization criterion
-
-ys_I, dys_I = tmodel.evaluate_normalization()
-print(f'\nW(I) =\t{ys_I[0,0]}')
-print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
-
-# %% Loss evalutation
-results = tmodel.evaluate(paths[:], 
-                        qobj=R.identity().as_matrix(),
-                        qmat=R.identity().as_matrix(),
-                        showplots=True)
-loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
-loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
-loss['paths'] = paths[:]
-loss
-
-
-# %% Evaluate objectivity
-robjs = R.identity()
-robjs = R.concatenate([robjs, R.random(9)])
-
-# for Qobj in robjs.as_matrix(): # iteration over material symmetry group
-#     #print(Qobj)
-#     results = tmodel.evaluate(paths[4:],  
-#                             qobj=Qobj,
-#                             qmat=R.identity().as_matrix(),
-#                             showplots=False)
-#     print(results)
-
-tmodel.evaluate_objectivity(paths, robjs)
-
-#def plot_observers()
-
-# %% Evaluate material symmetry
-
-# create material symmetry group
+# Create material symmetry group
 rmats = R.identity()
 rmats = R.concatenate([rmats, R.from_euler('x', [np.pi/2, np.pi, 3*np.pi/2])])
 rmats = R.concatenate([rmats, R.from_euler('y', [np.pi/2, np.pi, 3*np.pi/2])])
@@ -105,15 +64,52 @@ rmats = R.concatenate([rmats, R.from_rotvec( 4/3 * np.pi/np.sqrt(3) * np.array([
                                                                         [1, -1, 1],
                                                                         [-1, -1, 1]]))])
 
-for Qmat in rmats.as_matrix(): # iteration over material symmetry group
-    #print(Qmat)
-    results = tmodel.evaluate(paths[7:8],  
-                            qobj=R.identity().as_matrix(),
-                            qmat=Qmat,
-                            showplots=False)
-    #print(results)
 
+# %% Training
 
+lw = [1, 1]
+scaling = False
+
+tmodel = training.DefGradBased(paths=paths[:4],
+                                loss_weights=lw,
+                                loss_weighting=True,
+                                scaling=scaling,
+                                rmats=rmats,
+                                robjs=robjs)
+
+tmodel.calibrate(epochs=5000, verbose=2)
+#tmodel.calibrate(epochs=100, verbose=2)
+
+# %%  Data Augmentation
+tmodel.augment_data()
+tmodel.calibrate(epochs=500, verbose=2)
+
+# %% Evalutation of normalization criterion
+
+ys_I, dys_I = tmodel.evaluate_normalization()
+print(f'\nW(I) =\t{ys_I[0,0]}')
+print(f'P(I) =\t{dys_I[0,0]}\n\t{dys_I[0,1]}\n\t{dys_I[0,2]}')
+
+# %% Loss evalutation
+results = tmodel.evaluate(paths[:], 
+                        qobj=R.identity().as_matrix(),
+                        qmat=R.identity().as_matrix(),
+                        showplots=True)
+loss = pd.DataFrame(results, columns=['total', 'W', 'P'])
+loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
+loss['paths'] = paths[:]
+loss
+
+# %% Objectivity
+# Random rotations for testing objectivity
+robjs = R.random(300)
+
+# %% Evaluate objectivity
+results = tmodel.evaluate_objectivity(paths, robjs, qmat=R.identity().as_matrix())
+
+# %% Evaluate material symmetry
+
+tmodel.evaluate_matsymmetry(paths, rmats, qobj=R.identity().as_matrix())
 
 # %% Model parameters
 

@@ -37,23 +37,27 @@ import modules.data as ld
 class DefGradBased:
     ''' Class for training a physics augmented neutral network
     calling order: initialize --> preprocess --> calibrate --> evaluate '''
-    def __init__(self, paths, loss_weights, loss_weighting, scaling):
+    def __init__(self, paths, loss_weights, loss_weighting, scaling, rmats, robjs):
         # initialize variables
         self.loss_weights = loss_weights
         self.loss_weighting = loss_weighting
         self.scaling = scaling
-
-        # load calibration data
-        self.xs, self.ys, self.dys, self.batch_sizes = self.__load(paths)
-        
-        # preform pre-preocessing
-        self.sample_weights = np.ones(np.sum(self.batch_sizes))
-        if self.scaling: self.scalefactor = tf.math.reduce_max(tf.math.abs(self.dys)) ** (-1)
-        else: self.scalefactor = 1
-        self.__preprocess()
+        self.rmats = rmats
+        self.robjs = robjs
+        self.paths = paths # train paths
 
         # create model
         self.model = lm.main(r_type='DefGradBased', loss_weights=self.loss_weights)
+
+        # load calibration data
+        self.xs, self.ys, self.dys, self.batch_sizes = self.__load(self.paths)
+        
+        # perform pre-preocessing
+        self.sample_weights = np.ones(np.sum(self.batch_sizes))
+        # scaling with maximum absolute value
+        if self.scaling: self.scalefactor = tf.math.reduce_max(tf.math.abs(self.dys)) ** (-1)
+        else: self.scalefactor = 1
+        self.__preprocess()
 
     def __load(self, paths):
         ''' Load data for training or testing from a path '''
@@ -73,47 +77,71 @@ class DefGradBased:
         # apply load weighting strategy
         if self.loss_weighting:
             self.sample_weights = ld.get_sample_weights(self.xs, self.batch_sizes)
+        
         # reshape inputs
         self.ys = tf.reshape(self.ys,-1)
 
-    def calibrate(self, epochs, verbose=2):
+    def augment_data(self):
+        ''' Performs preprocessing for a second calibration by applying data augmentation '''
+        # load calibration data
+        self.xs, self.ys, self.dys, self.batch_sizes = self.__load(self.paths)
+
+        self.ys = self.ys * self.scalefactor
+        self.dys = self.dys * self.scalefactor
+
+        # reshape inputs
+        self.ys = tf.reshape(self.ys,-1)
+
+         # successive rotations
+        bz = self.batch_sizes.sum()
+        xs = np.zeros([bz * (self.robjs.__len__() + self.rmats.__len__()), 3, 3])
+        ys = np.zeros([bz * (self.robjs.__len__() + self.rmats.__len__())])
+        dys = np.zeros([bz * (self.robjs.__len__() + self.rmats.__len__()), 3, 3])
+
+        for i, Qobj in enumerate(self.robjs.as_matrix()):
+            xs[i*bz:(i+1)*bz,:,:] = Qobj @ self.xs
+            ys[i*bz:(i+1)*bz] = self.ys
+            dys[i*bz:(i+1)*bz,:,:] = Qobj @ self.dys
+        for j, Qmat in enumerate(self.rmats.as_matrix()):
+            xs[(i+j+1)*bz:(i+j+2)*bz,:,:] = self.xs @ Qmat
+            ys[(i+j+1)*bz:(i+j+2)*bz] = self.ys
+            dys[(i+j+1)*bz:(i+j+2)*bz,:,:] = self.dys @ Qmat
+
+        self.xs = xs
+        self.ys = ys
+        self.dys = dys
+
+        # apply sample weighting
+        self.sample_weights = np.ones(self.batch_sizes.sum() * (self.robjs.__len__() + self.rmats.__len__()))
+        if self.loss_weighting:
+            self.sample_weights = ld.get_sample_weights(self.xs, 
+                    np.tile(self.batch_sizes, self.robjs.__len__() + self.rmats.__len__()))
+
+
+    def calibrate(self, **kwargs):
         ''' Preform model training '''
-        t1 = now()
-        print(t1)
-
-        tf.keras.backend.set_value(self.model.optimizer.learning_rate, 0.002)
-        h = self.model.fit([self.xs], [self.ys, self.dys],
-                    epochs=epochs,
-                    verbose=verbose,
-                    sample_weight=self.sample_weights)
-
-        t2 = now()
-        print('it took', t2 - t1, '(sec) to calibrate the model')
-        pl.plot_calibration_loss(h)
+        calibrate(self.model, [self.xs], [self.ys, self.dys], 
+                    self.sample_weights, **kwargs)
 
     def evaluate_normalization(self):
         ''' Calls evaluate_normalization static function '''
         return evaluate_normalization(self.model)
 
-    def evaluate_objectivity(self, paths, robjs):
-        ''' Evaluate objectivity using rotations "robjs" '''
+    def evaluate_objectivity(self, paths, robjs, qmat):
+        ''' Evaluate objectivity using rotations "robjs" for one symmetry case'''
         # get batch sizes to initiliaze correct array dimensions
         batch_sizes = ld.load_stress_strain_data(paths)[3]
 
-        losses = np.zeros([len(paths), 3])
-        #potentials = np.zeros([robjs.__len__(), len(paths), np.sum(batch_sizes), 1])
-        #stresses = np.zeros([robjs.__len__(), len(paths), np.sum(batch_sizes), 3, 3])
+        losses = np.zeros([robjs.__len__(), len(paths), 3])
 
         for i, path in enumerate(paths):
             potentials = np.zeros([robjs.__len__(), batch_sizes[i], 1])
             stresses = np.zeros([robjs.__len__(), batch_sizes[i], 3, 3])
 
             for j, Qobj in enumerate(robjs.as_matrix()):
-                losses[i,:], _, pred, _ = self.__evaluate_single_load_path(path, Qobj, R.identity().as_matrix())
+                losses[j, i,:], _, pred, _ = self.__evaluate_single_load_path(path, Qobj, qmat)
                 potentials[j,:,:] = pred[0]
                 stresses[j,:,:] = pred[1]
-                #potentials[j, i, np.sum(batch_sizes[:i]):np.sum(batch_sizes[:i+1]), :] = pred[0]
-                #stresses[j, i, np.sum(batch_sizes[:i]):np.sum(batch_sizes[:i+1]), :] = pred[1]
 
             W = [np.mean(potentials, axis=0),
                 np.median(potentials, axis=0),
@@ -127,12 +155,24 @@ class DefGradBased:
             
             fname = path.split('/')[-1].split('.')[0]
             pl.plot_stress_objectivity(P, title=path, fname=fname)
-           
+        return losses
 
+    def evaluate_matsymmetry(self, paths, rmats, qobj):
+        ''' Evaluate material symmetry using rotations "rmats" for one observer '''
+        losses = np.zeros([ rmats.__len__(), len(paths), 3])
 
-        #  TODO: Plot median stress, maximum and minimum for each load step and
-        # and separated by load paths
+        for i, path in enumerate(paths):
+            for j, Qmat in enumerate(rmats.as_matrix()):
+                losses[j, i,:] = self.__evaluate_single_load_path(path, qobj, Qmat)[0]
+        
+        loss = np.array([np.mean(losses, axis=(1,2)),
+                        np.median(losses, axis=(1,2)),
+                        np.min(losses, axis=(1,2)),
+                        np.max(losses, axis=(1,2))])
 
+        fname = path.split('/')[-1].split('.')[0]
+        pl.matsym_loss(loss, title=path, fname=fname)
+        return losses
 
 
     def evaluate(self, paths, **kwargs):
@@ -502,6 +542,21 @@ class Naive:
 
 
 #%% Static function
+
+def calibrate(model, inp, out, sw, epochs, verbose=2):
+    ''' Preform model training '''
+    t1 = now()
+    print(t1)
+
+    tf.keras.backend.set_value(model.optimizer.learning_rate, 0.002)
+    h = model.fit(inp, out,
+                epochs=epochs,
+                verbose=verbose,
+                sample_weight=sw)
+
+    t2 = now()
+    print('it took', t2 - t1, '(sec) to calibrate the model')
+    pl.plot_calibration_loss(h)
 
 def evaluate_normalization(model):
     ''' Returns model prediction for Deformation Gradient = Identity '''

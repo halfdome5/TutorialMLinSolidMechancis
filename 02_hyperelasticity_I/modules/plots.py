@@ -301,30 +301,28 @@ def plot_stress_objectivity(P, title, fname):
     fig = plt.figure(dpi=600)
     # mean or median stress
     i = 1 # 0: mean, 1: median
-    plt.plot(x, P[1][:, 0, 0], linestyle='None', color='firebrick',marker='s', markevery=10, label=r'$P_{11}$')
-    plt.plot(x, P[1][:, 1, 0], linestyle='None', color='green', marker='^', markevery=15, label=r'$P_{21}$')
-    plt.plot(x, P[1][:, 2, 0], linestyle='None', color='lightgrey', marker='^', markevery=17, label=r'$P_{31}$')
-    plt.plot(x, P[1][:, 0, 1], linestyle='None', color='cornflowerblue', marker='^', markevery=13, label=r'$P_{12}$')
-    plt.plot(x, P[1][:, 1, 1], linestyle='None', color='navy', marker='s', markevery=11, label=r'$P_{22}$')
-    plt.plot(x, P[1][:, 2, 1], linestyle='None', color='lightgrey', marker='^', markevery=18, label=r'$P_{32}$')
-    plt.plot(x, P[1][:, 0, 2], linestyle='None', color='lightgrey', marker='^', markevery=14, label=r'$P_{13}$')
-    plt.plot(x, P[1][:, 1, 2], linestyle='None', color='lightgrey', marker='^', markevery=16, label=r'$P_{23}$')
-    plt.plot(x, P[1][:, 2, 2], linestyle='None', color='darkorange', marker='s', markevery=12, label=r'$P_{33}$')
+    plt.plot(x, P[1][:, 0, 0], linestyle='-', color='firebrick',marker='s', markevery=10, label=r'$P_{11}$')
+    plt.plot(x, P[1][:, 1, 0], linestyle='-', color='green', marker='^', markevery=15, label=r'$P_{21}$')
+    plt.plot(x, P[1][:, 2, 0], linestyle='-', color='lightgrey', marker='^', markevery=17, label=r'$P_{31}$')
+    plt.plot(x, P[1][:, 0, 1], linestyle='-', color='cornflowerblue', marker='^', markevery=13, label=r'$P_{12}$')
+    plt.plot(x, P[1][:, 1, 1], linestyle='-', color='navy', marker='s', markevery=11, label=r'$P_{22}$')
+    plt.plot(x, P[1][:, 2, 1], linestyle='-', color='lightgrey', marker='^', markevery=18, label=r'$P_{32}$')
+    plt.plot(x, P[1][:, 0, 2], linestyle='-', color='lightgrey', marker='^', markevery=14, label=r'$P_{13}$')
+    plt.plot(x, P[1][:, 1, 2], linestyle='-', color='lightgrey', marker='^', markevery=16, label=r'$P_{23}$')
+    plt.plot(x, P[1][:, 2, 2], linestyle='-', color='darkorange', marker='s', markevery=12, label=r'$P_{33}$')
     
     # plot min-max range
     alpha = 0.5
-    plt.fill_between(x, P[2][:, 0, 0], P[3][:, 0, 0], color='firebrick', alpha=alpha)
+    plt.fill_between(x, P[3][:, 0, 0], P[2][:, 0, 0], color='firebrick', alpha=alpha)
+    plt.fill_between(x, P[3][:, 1, 0], P[2][:, 1, 0], color='green', alpha=alpha)
+    plt.fill_between(x, P[3][:, 2, 0], P[2][:, 2, 0], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P[3][:, 0, 1], P[2][:, 0, 1], color='cornflowerblue', alpha=alpha)
+    plt.fill_between(x, P[3][:, 1, 1], P[2][:, 1, 1], color='navy', alpha=alpha)
+    plt.fill_between(x, P[3][:, 2, 1], P[2][:, 2, 1], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P[3][:, 0, 2], P[2][:, 0, 2], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P[3][:, 1, 2], P[2][:, 1, 2], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P[3][:, 2, 2], P[2][:, 2, 2], color='darkorange', alpha=alpha)
 
-    # predicted data
-    # plt.plot(x, P_pred[:, 0, 0], color='firebrick')
-    # plt.plot(x, P_pred[:, 1, 0], color='green')
-    # plt.plot(x, P_pred[:, 2, 0], color='lightgrey')
-    # plt.plot(x, P_pred[:, 0, 1], color='cornflowerblue')
-    # plt.plot(x, P_pred[:, 1, 1], color='navy')
-    # plt.plot(x, P_pred[:, 2, 1], color='lightgrey')
-    # plt.plot(x, P_pred[:, 0, 2], color='lightgrey')
-    # plt.plot(x, P_pred[:, 1, 2], color='lightgrey')
-    # plt.plot(x, P_pred[:, 2, 2], color='darkorange')
     plt.title(f'{title}\n\u25a0 data, \u2015 prediction')
     plt.xlabel('load step')
     plt.ylabel(r'$P_{ij}$')
@@ -335,6 +333,22 @@ def plot_stress_objectivity(P, title, fname):
         fig.savefig(f'images/P_obj_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
     plt.show()
 
+def matsym_loss(loss, title, fname):
+    x = np.arange(loss[0].size) + 1
+
+    # Build the plot
+    fig, ax = plt.subplots(dpi=600)
+    ax.bar(x, loss[1], yerr=loss[2:], align='center', alpha=0.5, ecolor='black', capsize=10)
+    ax.set_yscale('log')
+    ax.set_xlabel('cubic symmetry group')
+    ax.set_ylabel('loss')
+    ax.set_xticks(x)
+    ax.set_xticklabels(x)
+    ax.set_title(title)
+    ax.yaxis.grid(True)
+
+    fig.savefig(f'images/matsymloss_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
+    plt.show()
 
 # %%
 """
