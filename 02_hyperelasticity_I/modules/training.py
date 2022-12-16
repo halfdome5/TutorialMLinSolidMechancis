@@ -116,40 +116,30 @@ class DefGradBased:
                 xs[i*bs:(i+1)*bs,:,:] = Qobj @ self.xs
                 ys[i*bs:(i+1)*bs] = self.ys
                 dys[i*bs:(i+1)*bs,:,:] = Qobj @ self.dys
-                print((i+1)*bs)
-                print((i+1))
             
         elif a_type == 'mat':
             for j, Qmat in enumerate(self.rmats.as_matrix()):
                 xs[j*bs:(j+1)*bs,:,:] = self.xs @ Qmat
                 ys[j*bs:(j+1)*bs] = self.ys
                 dys[j*bs:(j+1)*bs,:,:] = self.dys @ Qmat
-                print((j+1)*bs)
-                print((j+1))
 
         elif a_type == 'successive':
             for i, Qobj in enumerate(self.robjs.as_matrix()):
                 xs[i*bs:(i+1)*bs,:,:] = Qobj @ self.xs
                 ys[i*bs:(i+1)*bs] = self.ys
                 dys[i*bs:(i+1)*bs,:,:] = Qobj @ self.dys
-                print((i+1)*bs)
-                print((i+1))
             for j, Qmat in enumerate(self.rmats.as_matrix()):
                 xs[(i+j+1)*bs:(i+j+2)*bs,:,:] = self.xs @ Qmat
                 ys[(i+j+1)*bs:(i+j+2)*bs] = self.ys
                 dys[(i+j+1)*bs:(i+j+2)*bs,:,:] = self.dys @ Qmat
-                print((i+j+2)*bs)
-                print((i+j+2))
 
         elif a_type == 'concurrent':
-            n_obj = self.robjs.__len__()
+            n_mat = self.rmats.__len__()
             for i, Qobj in enumerate(self.robjs.as_matrix()):
                 for j, Qmats in enumerate(self.rmats.as_matrix()):
-                    xs[(i*n_obj+j)*bs:(i*n_obj+j+1)*bs,:,:] = Qobj @ self.xs @ Qmats
-                    ys[(i*n_obj+j)*bs:(i*n_obj+j+1)*bs] = self.ys
-                    dys[(i*n_obj+j)*bs:(i*n_obj+j+1)*bs,:,:] = Qobj @ self.dys @ Qmats
-                    print((i*n_obj+j+1)*bs)
-                    print((i*n_obj+j+1))
+                    xs[(i*n_mat+j)*bs:(i*n_mat+j+1)*bs,:,:] = Qobj @ self.xs @ Qmats
+                    ys[(i*n_mat+j)*bs:(i*n_mat+j+1)*bs] = self.ys
+                    dys[(i*n_mat+j)*bs:(i*n_mat+j+1)*bs,:,:] = Qobj @ self.dys @ Qmats
 
         # update
         self.xs = xs
@@ -179,36 +169,32 @@ class DefGradBased:
             stresses = np.zeros([robjs.__len__(), batch_sizes[i], 3, 3])
 
             for j, Qobj in enumerate(robjs.as_matrix()):
-                losses[j, i,:], _, pred, _ = self.__evaluate_single_load_path(path, Qobj, qmat)
+                losses[j, i,:], ref, pred, _ = self.__evaluate_single_load_path(path, Qobj, qmat)
                 potentials[j,:,:] = pred[0]
-                stresses[j,:,:] = pred[1]
+                stresses[j,:,:] = Qobj.T @ pred[1]
+                P = Qobj.T @ ref[2]
 
-            W = [np.mean(potentials, axis=0),
-                np.median(potentials, axis=0),
-                np.min(potentials, axis=0),
-                np.max(potentials, axis=0)]
-
-            P = [np.mean(stresses, axis=0),
+            P_pred = [np.mean(stresses, axis=0),
                 np.median(stresses, axis=0),
                 np.min(stresses, axis=0),
                 np.max(stresses, axis=0)]
             
             fname = path.split('/')[-1].split('.')[0]
-            pl.plot_stress_objectivity(P, title=path, fname=fname)
+            pl.plot_stress_objectivity(P, P_pred, title=path, fname=fname)
         return losses
 
     def evaluate_matsymmetry(self, paths, rmats, qobj):
         ''' Evaluate material symmetry using rotations "rmats" for one observer '''
-        losses = np.zeros([ rmats.__len__(), len(paths), 3])
+        losses = np.zeros([rmats.__len__(), len(paths), 3])
 
         for i, path in enumerate(paths):
             for j, Qmat in enumerate(rmats.as_matrix()):
                 losses[j, i,:] = self.__evaluate_single_load_path(path, qobj, Qmat)[0]
         
-        loss = np.array([np.mean(losses, axis=(1,2)),
-                        np.median(losses, axis=(1,2)),
-                        np.min(losses, axis=(1,2)),
-                        np.max(losses, axis=(1,2))])
+        loss = np.array([np.mean(losses, axis=1)[:,0],
+                        np.median(losses, axis=1)[:,0],
+                        np.min(losses, axis=1)[:,0],
+                        np.max(losses, axis=1)[:,0]])
 
         fname = path.split('/')[-1].split('.')[0]
         pl.matsym_loss(loss, title=path, fname=fname)

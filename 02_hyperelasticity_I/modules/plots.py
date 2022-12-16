@@ -185,7 +185,6 @@ def plot_stress_tensor_analytical(P, P_ana):
 Plot for evaluation of trained model
 
 """
-
     
 def plot_stress_tensor_prediction(P, P_pred, title, fname=None):
     ''' Plots predicted stress tensor and reference stress tensor '''
@@ -271,8 +270,7 @@ def plot_right_cauchy_green_tensor(C, title, fname=None):
     plt.grid()
     plt.legend(handlelength=0, loc='center left', bbox_to_anchor=(1, 0.5))
     if fname is not None:
-        fig.savefig(f'images/C_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
-  
+        fig.savefig(f'images/C_{fname}.png', dpi=fig.dpi, bbox_inches='tight')  
 
 def plot_potential_prediction(W, W_pred, title, fname=None):
     ''' plots predicted and reference potential '''
@@ -291,37 +289,48 @@ def plot_potential_prediction(W, W_pred, title, fname=None):
         fig.savefig(f'images/W_prediction_{fname}.png', dpi=fig.dpi, bbox_inches='tight')
     plt.show()
 
-
-def plot_stress_objectivity(P, title, fname):
+def plot_stress_objectivity(P, P_pred, title, fname):
     ''' Plots predicted stress tensor and reference stress tensor '''
-    x = np.arange(np.size(P,axis=1)) + 1
+    x = np.arange(np.size(P_pred,axis=1)) + 1
     #P = tf.cast(P, dtype='float32')
     #P_pred = tf.cast(P_pred, dtype='float32')
     
     fig = plt.figure(dpi=600)
-    # mean or median stress
-    i = 1 # 0: mean, 1: median
-    plt.plot(x, P[1][:, 0, 0], linestyle='-', color='firebrick',marker='s', markevery=10, label=r'$P_{11}$')
-    plt.plot(x, P[1][:, 1, 0], linestyle='-', color='green', marker='^', markevery=15, label=r'$P_{21}$')
-    plt.plot(x, P[1][:, 2, 0], linestyle='-', color='lightgrey', marker='^', markevery=17, label=r'$P_{31}$')
-    plt.plot(x, P[1][:, 0, 1], linestyle='-', color='cornflowerblue', marker='^', markevery=13, label=r'$P_{12}$')
-    plt.plot(x, P[1][:, 1, 1], linestyle='-', color='navy', marker='s', markevery=11, label=r'$P_{22}$')
-    plt.plot(x, P[1][:, 2, 1], linestyle='-', color='lightgrey', marker='^', markevery=18, label=r'$P_{32}$')
-    plt.plot(x, P[1][:, 0, 2], linestyle='-', color='lightgrey', marker='^', markevery=14, label=r'$P_{13}$')
-    plt.plot(x, P[1][:, 1, 2], linestyle='-', color='lightgrey', marker='^', markevery=16, label=r'$P_{23}$')
-    plt.plot(x, P[1][:, 2, 2], linestyle='-', color='darkorange', marker='s', markevery=12, label=r'$P_{33}$')
-    
     # plot min-max range
     alpha = 0.5
-    plt.fill_between(x, P[3][:, 0, 0], P[2][:, 0, 0], color='firebrick', alpha=alpha)
-    plt.fill_between(x, P[3][:, 1, 0], P[2][:, 1, 0], color='green', alpha=alpha)
-    plt.fill_between(x, P[3][:, 2, 0], P[2][:, 2, 0], color='lightgrey', alpha=alpha)
-    plt.fill_between(x, P[3][:, 0, 1], P[2][:, 0, 1], color='cornflowerblue', alpha=alpha)
-    plt.fill_between(x, P[3][:, 1, 1], P[2][:, 1, 1], color='navy', alpha=alpha)
-    plt.fill_between(x, P[3][:, 2, 1], P[2][:, 2, 1], color='lightgrey', alpha=alpha)
-    plt.fill_between(x, P[3][:, 0, 2], P[2][:, 0, 2], color='lightgrey', alpha=alpha)
-    plt.fill_between(x, P[3][:, 1, 2], P[2][:, 1, 2], color='lightgrey', alpha=alpha)
-    plt.fill_between(x, P[3][:, 2, 2], P[2][:, 2, 2], color='darkorange', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 0, 0], P_pred[2][:, 0, 0], color='firebrick', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 1, 0], P_pred[2][:, 1, 0], color='green', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 2, 0], P_pred[2][:, 2, 0], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 0, 1], P_pred[2][:, 0, 1], color='cornflowerblue', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 1, 1], P_pred[2][:, 1, 1], color='navy', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 2, 1], P_pred[2][:, 2, 1], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 0, 2], P_pred[2][:, 0, 2], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 1, 2], P_pred[2][:, 1, 2], color='lightgrey', alpha=alpha)
+    plt.fill_between(x, P_pred[3][:, 2, 2], P_pred[2][:, 2, 2], color='darkorange', alpha=alpha)
+
+    # mean or median stress prediction
+    i = 1 # 0: mean, 1: median
+    plt.plot(x, P_pred[i][:, 0, 0], color='firebrick')
+    plt.plot(x, P_pred[i][:, 1, 0], color='green')
+    plt.plot(x, P_pred[i][:, 2, 0], color='lightgrey')
+    plt.plot(x, P_pred[i][:, 0, 1], color='cornflowerblue')
+    plt.plot(x, P_pred[i][:, 1, 1], color='navy')
+    plt.plot(x, P_pred[i][:, 2, 1], color='lightgrey')
+    plt.plot(x, P_pred[i][:, 0, 2], color='lightgrey')
+    plt.plot(x, P_pred[i][:, 1, 2], color='lightgrey')
+    plt.plot(x, P_pred[i][:, 2, 2], color='darkorange')
+
+    # calibration stress data
+    plt.plot(x, P[:, 0, 0], linestyle='None', color='firebrick',marker='s', markevery=10, label=r'$P_{11}$')
+    plt.plot(x, P[:, 1, 0], linestyle='None', color='green', marker='^', markevery=15, label=r'$P_{21}$')
+    plt.plot(x, P[:, 2, 0], linestyle='None', color='lightgrey', marker='^', markevery=17, label=r'$P_{31}$')
+    plt.plot(x, P[:, 0, 1], linestyle='None', color='cornflowerblue', marker='^', markevery=13, label=r'$P_{12}$')
+    plt.plot(x, P[:, 1, 1], linestyle='None', color='navy', marker='s', markevery=11, label=r'$P_{22}$')
+    plt.plot(x, P[:, 2, 1], linestyle='None', color='lightgrey', marker='^', markevery=18, label=r'$P_{32}$')
+    plt.plot(x, P[:, 0, 2], linestyle='None', color='lightgrey', marker='^', markevery=14, label=r'$P_{13}$')
+    plt.plot(x, P[:, 1, 2], linestyle='None', color='lightgrey', marker='^', markevery=16, label=r'$P_{23}$')
+    plt.plot(x, P[:, 2, 2], linestyle='None', color='darkorange', marker='s', markevery=12, label=r'$P_{33}$')
+
 
     plt.title(f'{title}\n\u25a0 data, \u2015 prediction')
     plt.xlabel('load step')
@@ -334,7 +343,7 @@ def plot_stress_objectivity(P, title, fname):
     plt.show()
 
 def matsym_loss(loss, title, fname):
-    x = np.arange(loss[0].size) + 1
+    x = np.arange(loss.shape[1]) + 1
 
     # Build the plot
     fig, ax = plt.subplots(dpi=600)
@@ -394,7 +403,7 @@ def plot_loss_over_train_split_physics_augmented(df, title, fname):
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.savefig(f'images/{fname}.png', dpi=fig.dpi, bbox_inches='tight')
 
-plt.show()
+    plt.show()
 
 def plot_loss_over_train_split_naive(df, title, fname):
     ''' Plots the mean, median, maximum and minimum loss over the test training split

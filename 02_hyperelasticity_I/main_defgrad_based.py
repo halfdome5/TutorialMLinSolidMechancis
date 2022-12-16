@@ -41,7 +41,7 @@ paths = [
 
 # %% Roations
 # Random rotations for objectivity training
-robjs = R.random(32)
+robjs = R.random(16)
 
 # Create material symmetry group
 rmats = R.identity()
@@ -67,7 +67,7 @@ rmats = R.concatenate([rmats, R.from_rotvec( 4/3 * np.pi/np.sqrt(3) * np.array([
 # %% Training
 
 lw = [1, 1]
-scaling = False
+scaling = True
 
 tmodel = training.DefGradBased(paths=paths[:4],
                                 loss_weights=lw,
@@ -76,12 +76,12 @@ tmodel = training.DefGradBased(paths=paths[:4],
                                 rmats=rmats,
                                 robjs=robjs)
 
-# Precalibrate
+# %% Precalibrate
 tmodel.calibrate(epochs=5000, verbose=2)
 
 # %%  Data Augmentation
-tmodel.augment_data(a_type='obj') # 'obj', 'mat', 'successive', 'concurrent'
-tmodel.calibrate(epochs=1000, verbose=2)
+tmodel.augment_data(a_type='successive') # 'obj', 'mat', 'successive', 'concurrent'
+tmodel.calibrate(epochs=150, verbose=2)
 
 # %% Evalutation of normalization criterion
 
@@ -99,15 +99,12 @@ loss['total'] = loss['W'] + loss['P'] # in case some loss weights != 0
 loss['paths'] = paths[:]
 loss
 
-# %% Objectivity
-robjs = R.random(100)
-
 # %% Evaluate objectivity
+robjs = R.random(300)
 results = tmodel.evaluate_objectivity(paths, robjs, qmat=R.identity().as_matrix())
 
 # %% Evaluate material symmetry
-
-tmodel.evaluate_matsymmetry(paths, rmats, qobj=R.identity().as_matrix())
+results = tmodel.evaluate_matsymmetry(paths, rmats, qobj=R.identity().as_matrix())
 
 # %% Model parameters
 
