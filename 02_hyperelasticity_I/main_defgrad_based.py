@@ -23,8 +23,7 @@ import pandas as pd
 now = datetime.datetime.now
 tf.keras.backend.set_floatx('float64')
 
-# %% Own modules
-import modules.data as ld
+# Own modules
 import modules.training as training
 
 # %% Data
@@ -42,7 +41,7 @@ paths = [
 
 # %% Roations
 # Random rotations for objectivity training
-robjs = R.random(16)
+robjs = R.random(32)
 
 # Create material symmetry group
 rmats = R.identity()
@@ -77,12 +76,12 @@ tmodel = training.DefGradBased(paths=paths[:4],
                                 rmats=rmats,
                                 robjs=robjs)
 
+# Precalibrate
 tmodel.calibrate(epochs=5000, verbose=2)
-#tmodel.calibrate(epochs=100, verbose=2)
 
 # %%  Data Augmentation
-tmodel.augment_data()
-tmodel.calibrate(epochs=500, verbose=2)
+tmodel.augment_data(a_type='obj') # 'obj', 'mat', 'successive', 'concurrent'
+tmodel.calibrate(epochs=1000, verbose=2)
 
 # %% Evalutation of normalization criterion
 
@@ -101,8 +100,7 @@ loss['paths'] = paths[:]
 loss
 
 # %% Objectivity
-# Random rotations for testing objectivity
-robjs = R.random(300)
+robjs = R.random(100)
 
 # %% Evaluate objectivity
 results = tmodel.evaluate_objectivity(paths, robjs, qmat=R.identity().as_matrix())

@@ -45,6 +45,7 @@ class DefGradBased:
         self.rmats = rmats
         self.robjs = robjs
         self.paths = paths # train paths
+        self.scalefactor = 1
 
         # create model
         self.model = lm.main(r_type='DefGradBased', loss_weights=self.loss_weights)
@@ -54,9 +55,6 @@ class DefGradBased:
         
         # perform pre-preocessing
         self.sample_weights = np.ones(np.sum(self.batch_sizes))
-        # scaling with maximum absolute value
-        if self.scaling: self.scalefactor = tf.math.reduce_max(tf.math.abs(self.dys)) ** (-1)
-        else: self.scalefactor = 1
         self.__preprocess()
 
     def __load(self, paths):
@@ -70,53 +68,95 @@ class DefGradBased:
 
     def __preprocess(self):
         ''' Preforms necessary pre-preocessing steps before model calibration '''
-        # rescale
-        self.ys = self.ys * self.scalefactor
-        self.dys = self.dys * self.scalefactor
-        
-        # apply load weighting strategy
-        if self.loss_weighting:
-            self.sample_weights = ld.get_sample_weights(self.xs, self.batch_sizes)
-        
-        # reshape inputs
+        self.__scale_calibration_data()
+        self.__apply_loss_weighting(self.xs, self.batch_sizes)
         self.ys = tf.reshape(self.ys,-1)
 
-    def augment_data(self):
+    def __scale_calibration_data(self):
+        if self.scaling: self.scalefactor = tf.math.reduce_max(tf.math.abs(self.dys)) ** (-1)
+        self.ys = self.ys * self.scalefactor
+        self.dys = self.dys * self.scalefactor
+
+    def __apply_loss_weighting(self, xs, batch_sizes):
+        if self.loss_weighting:
+            self.sample_weights = ld.get_sample_weights(xs, batch_sizes)
+        else:
+            self.sample_weights = np.ones(batch_sizes.sum())
+
+
+    def augment_data(self, a_type):
         ''' Performs preprocessing for a second calibration by applying data augmentation '''
+        # Data is reloaded to make it easier to recalibrate the model
         # load calibration data
         self.xs, self.ys, self.dys, self.batch_sizes = self.__load(self.paths)
+        
+        # perform pre-preocessing
+        self.sample_weights = np.ones(np.sum(self.batch_sizes))
+        self.__preprocess()
+        
+        if a_type == 'obj':
+            n_rots = self.robjs.__len__()
+        elif a_type == 'mat':
+            n_rots = self.rmats.__len__()
+        elif a_type == 'successive':
+            n_rots = self.robjs.__len__() + self.rmats.__len__()
+        elif a_type == 'concurrent':
+            n_rots = self.robjs.__len__() * self.rmats.__len__()
+        else:
+            raise ValueError(f'a_type "{a_type}" is unknown')
 
-        self.ys = self.ys * self.scalefactor
-        self.dys = self.dys * self.scalefactor
+        # initialize augmented dataset
+        bs = self.batch_sizes.sum()
+        xs = np.zeros([bs * n_rots, 3, 3])
+        ys = np.zeros([bs * n_rots])
+        dys = np.zeros([bs * n_rots, 3, 3])
 
-        # reshape inputs
-        self.ys = tf.reshape(self.ys,-1)
+        if a_type == 'obj':
+            for i, Qobj in enumerate(self.robjs.as_matrix()):
+                xs[i*bs:(i+1)*bs,:,:] = Qobj @ self.xs
+                ys[i*bs:(i+1)*bs] = self.ys
+                dys[i*bs:(i+1)*bs,:,:] = Qobj @ self.dys
+                print((i+1)*bs)
+                print((i+1))
+            
+        elif a_type == 'mat':
+            for j, Qmat in enumerate(self.rmats.as_matrix()):
+                xs[j*bs:(j+1)*bs,:,:] = self.xs @ Qmat
+                ys[j*bs:(j+1)*bs] = self.ys
+                dys[j*bs:(j+1)*bs,:,:] = self.dys @ Qmat
+                print((j+1)*bs)
+                print((j+1))
 
-         # successive rotations
-        bz = self.batch_sizes.sum()
-        xs = np.zeros([bz * (self.robjs.__len__() + self.rmats.__len__()), 3, 3])
-        ys = np.zeros([bz * (self.robjs.__len__() + self.rmats.__len__())])
-        dys = np.zeros([bz * (self.robjs.__len__() + self.rmats.__len__()), 3, 3])
+        elif a_type == 'successive':
+            for i, Qobj in enumerate(self.robjs.as_matrix()):
+                xs[i*bs:(i+1)*bs,:,:] = Qobj @ self.xs
+                ys[i*bs:(i+1)*bs] = self.ys
+                dys[i*bs:(i+1)*bs,:,:] = Qobj @ self.dys
+                print((i+1)*bs)
+                print((i+1))
+            for j, Qmat in enumerate(self.rmats.as_matrix()):
+                xs[(i+j+1)*bs:(i+j+2)*bs,:,:] = self.xs @ Qmat
+                ys[(i+j+1)*bs:(i+j+2)*bs] = self.ys
+                dys[(i+j+1)*bs:(i+j+2)*bs,:,:] = self.dys @ Qmat
+                print((i+j+2)*bs)
+                print((i+j+2))
 
-        for i, Qobj in enumerate(self.robjs.as_matrix()):
-            xs[i*bz:(i+1)*bz,:,:] = Qobj @ self.xs
-            ys[i*bz:(i+1)*bz] = self.ys
-            dys[i*bz:(i+1)*bz,:,:] = Qobj @ self.dys
-        for j, Qmat in enumerate(self.rmats.as_matrix()):
-            xs[(i+j+1)*bz:(i+j+2)*bz,:,:] = self.xs @ Qmat
-            ys[(i+j+1)*bz:(i+j+2)*bz] = self.ys
-            dys[(i+j+1)*bz:(i+j+2)*bz,:,:] = self.dys @ Qmat
+        elif a_type == 'concurrent':
+            n_obj = self.robjs.__len__()
+            for i, Qobj in enumerate(self.robjs.as_matrix()):
+                for j, Qmats in enumerate(self.rmats.as_matrix()):
+                    xs[(i*n_obj+j)*bs:(i*n_obj+j+1)*bs,:,:] = Qobj @ self.xs @ Qmats
+                    ys[(i*n_obj+j)*bs:(i*n_obj+j+1)*bs] = self.ys
+                    dys[(i*n_obj+j)*bs:(i*n_obj+j+1)*bs,:,:] = Qobj @ self.dys @ Qmats
+                    print((i*n_obj+j+1)*bs)
+                    print((i*n_obj+j+1))
 
+        # update
         self.xs = xs
         self.ys = ys
         self.dys = dys
 
-        # apply sample weighting
-        self.sample_weights = np.ones(self.batch_sizes.sum() * (self.robjs.__len__() + self.rmats.__len__()))
-        if self.loss_weighting:
-            self.sample_weights = ld.get_sample_weights(self.xs, 
-                    np.tile(self.batch_sizes, self.robjs.__len__() + self.rmats.__len__()))
-
+        self.__apply_loss_weighting(self.xs, np.tile(self.batch_sizes, n_rots))
 
     def calibrate(self, **kwargs):
         ''' Preform model training '''
@@ -173,7 +213,6 @@ class DefGradBased:
         fname = path.split('/')[-1].split('.')[0]
         pl.matsym_loss(loss, title=path, fname=fname)
         return losses
-
 
     def evaluate(self, paths, **kwargs):
         ''' Perform evaluation '''
