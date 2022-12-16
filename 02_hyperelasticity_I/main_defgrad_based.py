@@ -66,7 +66,7 @@ rmats = R.concatenate([rmats, R.from_rotvec( 4/3 * np.pi/np.sqrt(3) * np.array([
 
 # %% Training
 
-lw = [1, 1]
+lw = [0, 1]
 scaling = True
 
 tmodel = training.DefGradBased(paths=paths[:4],
