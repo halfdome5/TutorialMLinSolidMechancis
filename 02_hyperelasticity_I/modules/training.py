@@ -116,12 +116,14 @@ class DefGradBased:
                 xs[i*bs:(i+1)*bs,:,:] = Qobj @ self.xs
                 ys[i*bs:(i+1)*bs] = self.ys
                 dys[i*bs:(i+1)*bs,:,:] = Qobj @ self.dys
+            print(f'Dataset augmented by factor: {i + 1}')
             
         elif a_type == 'mat':
             for j, Qmat in enumerate(self.rmats.as_matrix()):
                 xs[j*bs:(j+1)*bs,:,:] = self.xs @ Qmat
                 ys[j*bs:(j+1)*bs] = self.ys
                 dys[j*bs:(j+1)*bs,:,:] = self.dys @ Qmat
+            print(f'Dataset augmented by factor: {j + 1}')
 
         elif a_type == 'successive':
             for i, Qobj in enumerate(self.robjs.as_matrix()):
@@ -132,6 +134,7 @@ class DefGradBased:
                 xs[(i+j+1)*bs:(i+j+2)*bs,:,:] = self.xs @ Qmat
                 ys[(i+j+1)*bs:(i+j+2)*bs] = self.ys
                 dys[(i+j+1)*bs:(i+j+2)*bs,:,:] = self.dys @ Qmat
+            print(f'Dataset augmented by factor: {i + j + 2}')
 
         elif a_type == 'concurrent':
             n_mat = self.rmats.__len__()
@@ -140,6 +143,7 @@ class DefGradBased:
                     xs[(i*n_mat+j)*bs:(i*n_mat+j+1)*bs,:,:] = Qobj @ self.xs @ Qmats
                     ys[(i*n_mat+j)*bs:(i*n_mat+j+1)*bs] = self.ys
                     dys[(i*n_mat+j)*bs:(i*n_mat+j+1)*bs,:,:] = Qobj @ self.dys @ Qmats
+            print(f'Dataset augmented by factor: {i * n_mat + j + 1}')
 
         # update
         self.xs = xs
@@ -183,22 +187,37 @@ class DefGradBased:
             pl.plot_stress_objectivity(P, P_pred, title=path, fname=fname)
         return losses
 
-    def evaluate_matsymmetry(self, paths, rmats, qobj):
+    def evaluate_matsymmetry(self, paths, rmats, qobj, showplot=True):
         ''' Evaluate material symmetry using rotations "rmats" for one observer '''
         losses = np.zeros([rmats.__len__(), len(paths), 3])
 
         for i, path in enumerate(paths):
             for j, Qmat in enumerate(rmats.as_matrix()):
-                losses[j, i,:] = self.__evaluate_single_load_path(path, qobj, Qmat)[0]
-        
-        loss = np.array([np.mean(losses, axis=1)[:,0],
+                losses[j,i,:] = self.__evaluate_single_load_path(path, qobj, Qmat)[0]
+
+        if showplot: 
+            loss = np.array([np.mean(losses, axis=1)[:,0],
                         np.median(losses, axis=1)[:,0],
                         np.min(losses, axis=1)[:,0],
                         np.max(losses, axis=1)[:,0]])
-
-        fname = path.split('/')[-1].split('.')[0]
-        pl.matsym_loss(loss, title=path, fname=fname)
+            pl.matsym_loss(loss, title='Material symmetry for one observer', fname='')
         return losses
+
+    def evaluate_concurrent(self, paths, robjs, rmats, showplot=True):
+        ''' Concurrent evaluation of material symmetry for each observer '''
+        losses = np.zeros([robjs.__len__(), rmats.__len__(), len(paths), 3])
+        for i, Qobj in enumerate(robjs.as_matrix()):
+            losses[i,:,:,:] = self.evaluate_matsymmetry(paths, rmats, Qobj, showplot=False)
+
+        loss = np.array([np.mean(losses, axis=(0,2))[:,0],
+                        np.median(losses, axis=(0,2))[:,0],
+                        np.min(losses, axis=(0,2))[:,0],
+                        np.max(losses, axis=(0,2))[:,0]])
+
+        if showplot: pl.matsym_loss(loss, title='Material symmetry for all observers', fname='')
+        return losses
+
+        
 
     def evaluate(self, paths, **kwargs):
         ''' Perform evaluation '''

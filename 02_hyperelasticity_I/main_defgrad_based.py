@@ -41,7 +41,7 @@ paths = [
 
 # %% Roations
 # Random rotations for objectivity training
-robjs = R.random(16)
+robjs = R.random(8)
 
 # Create material symmetry group
 rmats = R.identity()
@@ -66,7 +66,7 @@ rmats = R.concatenate([rmats, R.from_rotvec( 4/3 * np.pi/np.sqrt(3) * np.array([
 
 # %% Training
 
-lw = [0, 1]
+lw = [1, 1]
 scaling = True
 
 tmodel = training.DefGradBased(paths=paths[:4],
@@ -80,8 +80,8 @@ tmodel = training.DefGradBased(paths=paths[:4],
 tmodel.calibrate(epochs=5000, verbose=2)
 
 # %%  Data Augmentation
-tmodel.augment_data(a_type='successive') # 'obj', 'mat', 'successive', 'concurrent'
-tmodel.calibrate(epochs=150, verbose=2)
+tmodel.augment_data(a_type='concurrent') # 'obj', 'mat', 'successive', 'concurrent'
+tmodel.calibrate(epochs=250, verbose=2)
 
 # %% Evalutation of normalization criterion
 
@@ -105,6 +105,18 @@ results = tmodel.evaluate_objectivity(paths, robjs, qmat=R.identity().as_matrix(
 
 # %% Evaluate material symmetry
 results = tmodel.evaluate_matsymmetry(paths, rmats, qobj=R.identity().as_matrix())
+
+# %%
+import cProfile
+import pstats
+robjs_prof = R.random(1)
+profile = cProfile.Profile()
+profile.runcall(tmodel.evaluate_concurrent,paths, robjs_prof, rmats)
+ps = pstats.Stats(profile)
+ps.print_stats()
+
+# %% Concurrent evaluation of objectivity and material symmetry
+results = tmodel.evaluate_concurrent(paths, robjs, rmats)
 
 # %% Model parameters
 

@@ -170,9 +170,9 @@ class InputConvexNonNeg(layers.Layer):
     def __init__(self):
         super().__init__()
         # define hidden layers with activation functions
-        self.ls = [layers.Dense(16, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(16, 'softplus', kernel_constraint=non_neg())]
-        self.ls += [layers.Dense(16, 'softplus', kernel_constraint=non_neg())]
+        self.ls = [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
+        self.ls += [layers.Dense(8, 'softplus', kernel_constraint=non_neg())]
         # scalar-valued output function
         self.ls += [layers.Dense(1, kernel_constraint=non_neg())]
 
