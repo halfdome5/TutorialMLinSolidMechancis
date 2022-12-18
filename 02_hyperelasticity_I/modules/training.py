@@ -214,7 +214,7 @@ class DefGradBased:
                         np.min(losses, axis=(0,2))[:,0],
                         np.max(losses, axis=(0,2))[:,0]])
 
-        if showplot: pl.matsym_loss(loss, title='Material symmetry for all observers', fname='')
+        if showplot: pl.matsym_loss(loss, title='Material symmetry for multiple observers', fname='concurrent')
         return losses
 
         

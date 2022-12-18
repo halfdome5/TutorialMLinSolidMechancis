@@ -41,7 +41,7 @@ paths = [
 
 # %% Roations
 # Random rotations for objectivity training
-robjs = R.random(8)
+robjs = R.random(16)
 
 # Create material symmetry group
 rmats = R.identity()
@@ -104,19 +104,26 @@ robjs = R.random(300)
 results = tmodel.evaluate_objectivity(paths, robjs, qmat=R.identity().as_matrix())
 
 # %% Evaluate material symmetry
-results = tmodel.evaluate_matsymmetry(paths, rmats, qobj=R.identity().as_matrix())
-
-# %%
-import cProfile
-import pstats
-robjs_prof = R.random(1)
-profile = cProfile.Profile()
-profile.runcall(tmodel.evaluate_concurrent,paths, robjs_prof, rmats)
-ps = pstats.Stats(profile)
-ps.print_stats()
+print('Training')
+results = tmodel.evaluate_matsymmetry(paths[:3], rmats, qobj=R.identity().as_matrix())
+print('Testing')
+results = tmodel.evaluate_matsymmetry(paths[3:], rmats, qobj=R.identity().as_matrix())
 
 # %% Concurrent evaluation of objectivity and material symmetry
-results = tmodel.evaluate_concurrent(paths, robjs, rmats)
+robjs = R.random(20)
+print('Training')
+results = tmodel.evaluate_concurrent(paths[:3], robjs, rmats)
+print('Testing')
+results = tmodel.evaluate_concurrent(paths[3:], robjs, rmats)
+
+# %%
+# import cProfile
+# import pstats
+# robjs_prof = R.random(1)
+# profile = cProfile.Profile()
+# profile.runcall(tmodel.evaluate_concurrent,paths, robjs_prof, rmats)
+# ps = pstats.Stats(profile)
+# ps.print_stats()
 
 # %% Model parameters
 
