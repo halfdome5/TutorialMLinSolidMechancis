@@ -1,0 +1,12 @@
+02_hyperelasticity_I:
+
+	02_evaluate_analytical_model.py	- Script for evaluation of invariant-based, analytical, transvesely isotrop material model
+	02_main_naive.py				- Script for training of naive model based on FFNN
+	02_main_transverse_isotropy.py	- Script for training of invariant-based, physics augmented ICNN model for transverse isotropy
+	02_main_split_variation.py		- Script for training of multiple models (FFNN or ICNN) on different test-train splits
+				  
+03_hyperelasticity_II:
+
+	03_data_visualization_cubic_anisotropy.py	- Script for visualization of BCC data for task 3
+	03_main_cubic_anisotropy.py					- Script for training of invariant-based, physics augmented ICNN for cubic anisotropy
+	03_main_defgrad_based.py					- Script for training of deformation-gradient-based ICNN model with or without data augmentation (successive or concurrent)
